@@ -30,7 +30,7 @@ public class InjectorValidator implements Validator
 		{
 			for (Class intf : cf.getInterfaces())
 			{
-				if (intf.getName().startsWith(API_BASE))
+				if (!intf.getName().startsWith(API_BASE))
 				{
 					continue;
 				}

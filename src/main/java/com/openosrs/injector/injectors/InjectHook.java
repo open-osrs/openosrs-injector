@@ -35,12 +35,13 @@ import net.runelite.asm.attributes.code.instructions.Swap;
 import net.runelite.asm.execution.Execution;
 import net.runelite.asm.execution.InstructionContext;
 import net.runelite.asm.execution.StackContext;
+import net.runelite.asm.pool.Class;
 import net.runelite.asm.signature.Signature;
 import net.runelite.deob.DeobAnnotations;
 
 public class InjectHook extends AbstractInjector
 {
-	private static final String HOOK_METHOD_SIGNATURE = "(I)V";
+	private static final Signature HOOK_SIG = new Signature("(I)V");
 	private static final String CLINIT = "<clinit>";
 	private static final Type FIELDHOOK = new Type("Lnet/runelite/api/mixins/FieldHook;");
 
@@ -102,7 +103,7 @@ public class InjectHook extends AbstractInjector
 				final Number getter = DeobAnnotations.getObfuscatedGetter(deobField);
 				final Field obField = inject.toVanilla(deobField);
 
-				final HookInfo info = new HookInfo(mixinClass.getName(), hookName, mixinMethod, before, getter);
+				final HookInfo info = new HookInfo(targetClass.getPoolClass(), mixinMethod, before, getter);
 
 				hooked.put(obField, info);
 			}
@@ -154,10 +155,7 @@ public class InjectHook extends AbstractInjector
 				return;
 			}
 
-			String hookName = hookInfo.fieldName;
-			assert hookName != null;
-
-			log.trace("Found injection location for hook {} at instruction {}", hookName, sfi);
+			log.trace("Found injection location for hook {} at instruction {}", hookInfo.method.getName(), sfi);
 			++injectedHooks;
 
 			StackContext value = ic.getPops().get(0);
@@ -230,8 +228,6 @@ public class InjectHook extends AbstractInjector
 				return;
 			}
 
-			String hookName = hookInfo.fieldName;
-
 			StackContext value = ic.getPops().get(0);
 			StackContext index = ic.getPops().get(1);
 
@@ -245,7 +241,7 @@ public class InjectHook extends AbstractInjector
 			}
 
 			// inject hook after 'i'
-			log.debug("Found array injection location for hook {} at instruction {}", hookName, i);
+			log.debug("Found array injection location for hook {} at instruction {}", hookInfo.method.getName(), i);
 			++injectedHooks;
 
 			int idx = ins.getInstructions().indexOf(i);
@@ -297,50 +293,25 @@ public class InjectHook extends AbstractInjector
 				ins.getInstructions().add(idx++, new LDC(ins, hookInfo.getter));
 				ins.getInstructions().add(idx++, new LMul(ins));
 			}
-
-			if (!value.type.equals(methodArgumentType))
-			{
-				CheckCast checkCast = new CheckCast(ins);
-				checkCast.setType(methodArgumentType);
-				ins.getInstructions().add(idx++, checkCast);
-			}
-			if (index != null)
-			{
-				idx = recursivelyPush(ins, idx, index);
-			}
-
-			InvokeVirtual invoke = new InvokeVirtual(ins,
-				new net.runelite.asm.pool.Method(
-					new net.runelite.asm.pool.Class(hookInfo.clazz),
-					hookInfo.method.getName(),
-					signature
-				)
-			);
-			ins.getInstructions().add(idx++, invoke);
 		}
 		else
 		{
 			ins.getInstructions().add(idx++, new Dup(ins)); // dup value
-			if (!value.type.equals(methodArgumentType))
-			{
-				CheckCast checkCast = new CheckCast(ins);
-				checkCast.setType(methodArgumentType);
-				ins.getInstructions().add(idx++, checkCast);
-			}
-			if (index != null)
-			{
-				idx = recursivelyPush(ins, idx, index);
-			}
-
-			InvokeStatic invoke = new InvokeStatic(ins,
-				new net.runelite.asm.pool.Method(
-					new net.runelite.asm.pool.Class(hookInfo.clazz),
-					hookInfo.method.getName(),
-					signature
-				)
-			);
-			ins.getInstructions().add(idx++, invoke);
 		}
+
+		if (!value.type.equals(methodArgumentType))
+		{
+			CheckCast checkCast = new CheckCast(ins);
+			checkCast.setType(methodArgumentType);
+			ins.getInstructions().add(idx++, checkCast);
+		}
+		if (index != null)
+		{
+			idx = recursivelyPush(ins, idx, index);
+		}
+
+		Instruction invoke = getInvokeFor(ins, hookInfo, signature);
+		ins.getInstructions().add(idx++, invoke);
 	}
 
 	private int recursivelyPush(Instructions ins, int idx, StackContext sctx)
@@ -372,52 +343,50 @@ public class InjectHook extends AbstractInjector
 			}
 
 			idx = recursivelyPush(ins, idx, objectPusher);
-			if (index != null)
-			{
-				idx = recursivelyPush(ins, idx, index);
-			}
-			else
-			{
-				ins.getInstructions().add(idx++, new LDC(ins, -1));
-			}
+		}
 
-			InvokeVirtual invoke = new InvokeVirtual(ins,
-				new net.runelite.asm.pool.Method(
-					new net.runelite.asm.pool.Class(hookInfo.clazz),
-					hookInfo.method.getName(),
-					new Signature(HOOK_METHOD_SIGNATURE)
-				)
-			);
-			ins.getInstructions().add(idx++, invoke);
-
+		if (index != null)
+		{
+			idx = recursivelyPush(ins, idx, index);
 		}
 		else
 		{
-			if (index != null)
-			{
-				idx = recursivelyPush(ins, idx, index);
-			}
-			else
-			{
-				ins.getInstructions().add(idx++, new LDC(ins, -1));
-			}
+			ins.getInstructions().add(idx++, new LDC(ins, -1));
+		}
 
-			InvokeStatic invoke = new InvokeStatic(ins,
+		Instruction invoke = getInvokeFor(ins, hookInfo);
+		ins.getInstructions().add(idx++, invoke);
+	}
+
+	private Instruction getInvokeFor(Instructions ins, HookInfo hook)
+	{
+		return getInvokeFor(ins, hook, HOOK_SIG);
+	}
+
+	private Instruction getInvokeFor(Instructions ins, HookInfo hook, Signature sig) {
+		if (hook.method.isStatic()) {
+			return new InvokeStatic(ins,
 				new net.runelite.asm.pool.Method(
-					new net.runelite.asm.pool.Class(hookInfo.clazz),
-					hookInfo.method.getName(),
-					new Signature(HOOK_METHOD_SIGNATURE)
+					hook.targetClass,
+					hook.method.getName(),
+					sig
 				)
 			);
-			ins.getInstructions().add(idx++, invoke);
+		} else {
+			return new InvokeVirtual(ins,
+				new net.runelite.asm.pool.Method(
+					hook.targetClass,
+					hook.method.getName(),
+					sig
+				)
+			);
 		}
 	}
 
 	@AllArgsConstructor
 	static class HookInfo
 	{
-		String fieldName;
-		String clazz;
+		Class targetClass;
 		Method method;
 		boolean before;
 		Number getter;
