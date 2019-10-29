@@ -29,9 +29,9 @@ dependencies {
     implementation("org.projectlombok:lombok:1.18.10")
 
     testImplementation("junit:junit:4.12")
+    testImplementation("com.openosrs:mixins:${project.version}")
    // testRuntimeOnly("com.openosrs.rs:rs-client:${project.version}")
     testCompileOnly("com.openosrs.rs:runescape-api:${project.version}")
-   // testRuntimeOnly("com.openosrs:mixins:${project.version}")
    // testRuntimeOnly("net.runelite.rs:vanilla")
 }
 

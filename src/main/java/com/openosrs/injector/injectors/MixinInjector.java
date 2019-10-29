@@ -1,5 +1,6 @@
 package com.openosrs.injector.injectors;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.openosrs.injector.InjectUtil;
@@ -62,7 +63,12 @@ public class MixinInjector extends AbstractInjector
 	public void inject() throws Injexception
 	{
 		final Map<Provider<ClassFile>, List<ClassFile>> mixinTargets = initTargets();
+		inject(mixinTargets);
+	}
 
+	@VisibleForTesting
+	void inject(Map<Provider<ClassFile>, List<ClassFile>> mixinTargets) throws Injexception
+	{
 		for (Map.Entry<Provider<ClassFile>, List<ClassFile>> entry : mixinTargets.entrySet())
 		{
 			injectFields(entry.getKey(), entry.getValue());
@@ -245,7 +251,7 @@ public class MixinInjector extends AbstractInjector
 				}
 				else
 				{
-					deobSourceMethod = InjectUtil.findMethodDeep(inject.toDeob(targetClass.getClassName()), copiedName, mixinMethod.getDescriptor().rsApiToRsClient());
+					deobSourceMethod = InjectUtil.findMethodDeep(inject.toDeob(targetClass.getName()), copiedName, mixinMethod.getDescriptor().rsApiToRsClient());
 				}
 
 				if (mixinMethod.isStatic() != deobSourceMethod.isStatic())
