@@ -5,6 +5,7 @@ import static com.openosrs.injector.rsapi.RSApi.*;
 import static com.openosrs.injector.rsapi.RSApi.API_BASE;
 import com.openosrs.injector.rsapi.RSApiClass;
 import com.openosrs.injector.rsapi.RSApiMethod;
+import java.util.List;
 import java.util.stream.Collectors;
 import net.runelite.asm.Annotated;
 import net.runelite.asm.ClassFile;
@@ -21,6 +22,8 @@ import net.runelite.asm.attributes.code.instructions.ALoad;
 import net.runelite.asm.attributes.code.instructions.DLoad;
 import net.runelite.asm.attributes.code.instructions.FLoad;
 import net.runelite.asm.attributes.code.instructions.ILoad;
+import net.runelite.asm.attributes.code.instructions.InvokeStatic;
+import net.runelite.asm.attributes.code.instructions.InvokeVirtual;
 import net.runelite.asm.attributes.code.instructions.LLoad;
 import net.runelite.asm.attributes.code.instructions.Return;
 import net.runelite.asm.attributes.code.instructions.VReturn;
@@ -59,11 +62,7 @@ public class InjectUtil
 
 		if (classHint != null)
 		{
-			ClassFile clazz = deob.findClass(classHint);
-			if (clazz == null)
-			{
-				throw new Injexception("Hint class " + classHint + " doesn't exist");
-			}
+			ClassFile clazz = findClassOrThrow(deob, classHint);
 
 			if (sig == null)
 			{
@@ -73,15 +72,13 @@ public class InjectUtil
 			{
 				method = clazz.findStaticMethod(name, sig);
 			}
+
+			if (method != null)
+				return data.toVanilla(method);
 		}
 
 		for (ClassFile clazz : deob)
 		{
-			if (method != null)
-			{
-				break;
-			}
-
 			if (sig == null)
 			{
 				method = clazz.findStaticMethod(name);
@@ -90,14 +87,21 @@ public class InjectUtil
 			{
 				method = clazz.findStaticMethod(name, sig);
 			}
+
+			if (method != null)
+				return data.toVanilla(method);
 		}
 
-		if (method == null)
-		{
-			throw new Injexception("Static method " + name + " doesn't exist");
-		}
+		throw new Injexception("Static method " + name + " doesn't exist");
+	}
 
-		return data.toVanilla(method);
+	private static ClassFile findClassOrThrow(ClassGroup group, String name) throws Injexception
+	{
+		ClassFile clazz = group.findClass(name);
+		if (clazz == null)
+			throw new Injexception("Hint class " + name + " doesn't exist");
+
+		return clazz;
 	}
 
 	/**
@@ -113,6 +117,37 @@ public class InjectUtil
 		return findStaticMethod(data, pool.getName(), pool.getClazz().getName(), pool.getType());
 	}
 
+	public static Method findMethodWithArgs(InjectData data, String name, String hintClass, Signature sig) throws Injexception
+	{
+		final ClassGroup deob = data.getDeobfuscated();
+		if (hintClass != null)
+		{
+			ClassFile clazz = findClassOrThrow(deob, hintClass);
+			Method method = clazz.findStaticMethod(name);
+
+			if (method != null && argsMatch(sig, method.getDescriptor()))
+				return data.toVanilla(method);
+		}
+
+		for (ClassFile c : deob)
+			for (Method m : c.getMethods())
+				if (m.getName().equals(name) && argsMatch(sig, m.getDescriptor()))
+					return data.toVanilla(m);
+
+		throw new Injexception("Method called " + name + " with args matching " + sig + " doesn't exist");
+	}
+
+	public static Method findMethodWithArgsDeep(InjectData data, ClassFile clazz, String name, Signature sig) throws Injexception
+	{
+		do
+			for (Method m : clazz.getMethods())
+				if (m.getName().equals(name) && argsMatch(sig, m.getDescriptor()))
+					return data.toVanilla(m);
+		while ((clazz = clazz.getParent()) != null);
+
+		throw new Injexception("Method called " + name + " with args matching " + sig + " doesn't exist");
+	}
+
 	/**
 	 * Fail-fast implementation of ClassGroup.findStaticMethod
 	 */
@@ -120,9 +155,8 @@ public class InjectUtil
 	{
 		Method m = group.findStaticMethod(name);
 		if (m == null)
-		{
 			throw new Injexception(String.format("Method %s couldn't be found", name));
-		}
+
 		return m;
 	}
 
@@ -175,7 +209,7 @@ public class InjectUtil
 		for (ClassFile clazz : group)
 		{
 			Field f = clazz.findField(name);
-			if (f != null)
+			if (f != null && f.isStatic())
 			{
 				return f;
 			}
@@ -200,11 +234,7 @@ public class InjectUtil
 
 		if (classHint != null)
 		{
-			ClassFile clazz = deob.findClass(classHint);
-			if (clazz == null)
-			{
-				throw new Injexception("Hint class " + classHint + " doesn't exist");
-			}
+			ClassFile clazz = findClassOrThrow(deob, classHint);
 
 			if (type == null)
 			{
@@ -213,16 +243,16 @@ public class InjectUtil
 			else
 			{
 				field = clazz.findField(name, type);
+			}
+
+			if (field != null)
+			{
+				return data.toVanilla(field);
 			}
 		}
 
 		for (ClassFile clazz : deob)
 		{
-			if (field != null)
-			{
-				break;
-			}
-
 			if (type == null)
 			{
 				field = clazz.findField(name);
@@ -231,14 +261,14 @@ public class InjectUtil
 			{
 				field = clazz.findField(name, type);
 			}
+
+			if (field != null)
+			{
+				return data.toVanilla(field);
+			}
 		}
 
-		if (field == null)
-		{
-			throw new Injexception(String.format("Static field %s doesn't exist", (type != null ? type + " " : "") + name));
-		}
-
-		return data.toVanilla(field);
+		throw new Injexception(String.format("Static field %s doesn't exist", (type != null ? type + " " : "") + name));
 	}
 
 	/**
@@ -282,11 +312,7 @@ public class InjectUtil
 		Field field;
 		if (hintClass != null)
 		{
-			ClassFile clazz = group.findClass(hintClass);
-			if (clazz == null)
-			{
-				throw new Injexception("Hint class " + hintClass + " doesn't exist");
-			}
+			ClassFile clazz = findClassOrThrow(group, hintClass);
 
 			field = clazz.findField(name);
 			if (field != null)
@@ -360,7 +386,7 @@ public class InjectUtil
 			}
 			while (changed);
 
-			return apiToDeob(data, new Type(highestKnown.getName()));
+			return apiToDeob(data, Type.getType(highestKnown.getName(), api.getDimensions()));
 		}
 
 		return api;
@@ -385,6 +411,27 @@ public class InjectUtil
 	public static boolean apiToDeobSigEquals(InjectData data, Signature deobSig, Signature apiSig)
 	{
 		return deobSig.equals(apiToDeob(data, apiSig));
+	}
+
+	public static boolean argsMatch(Signature a, Signature b)
+	{
+		List<Type> aa = a.getArguments();
+		List<Type> bb = b.getArguments();
+
+		if (aa.size() != bb.size())
+		{
+			return false;
+		}
+
+		for (int i = 0; i < aa.size(); i++)
+		{
+			if (!aa.get(i).equals(bb.get(i)))
+			{
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	/**
@@ -464,6 +511,18 @@ public class InjectUtil
 				return new VReturn(instructions);
 			default:
 				throw new IllegalStateException("Unknown type");
+		}
+	}
+
+	public static Instruction createInvokeFor(Instructions instructions, net.runelite.asm.pool.Method method, boolean isStatic)
+	{
+		if (isStatic)
+		{
+			return new InvokeStatic(instructions, method);
+		}
+		else
+		{
+			return new InvokeVirtual(instructions, method);
 		}
 	}
 }

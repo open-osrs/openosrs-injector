@@ -68,7 +68,7 @@ public class Injection extends InjectData implements InjectTaskHandler
 
 		// inject(new HidePlayerAttacks(this));
 
-		new InjectorValidator(this).validate();
+		validate(new InjectorValidator(this));
 	}
 
 	public void save(File outputJar) throws IOException

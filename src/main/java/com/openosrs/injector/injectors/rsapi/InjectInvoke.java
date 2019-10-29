@@ -40,8 +40,9 @@ public class InjectInvoke
 		int varIdx = 0;
 		if (!vanillaMethod.isStatic())
 		{
-			ins.add(new ALoad(instructions, varIdx++));
+			ins.add(new ALoad(instructions, varIdx));
 		}
+		++varIdx;
 
 		final Signature apiSig = apiMethod.getSignature();
 		final Signature vanSig = vanillaMethod.getDescriptor();

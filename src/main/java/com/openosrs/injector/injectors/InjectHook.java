@@ -26,8 +26,6 @@ import net.runelite.asm.attributes.code.instructions.ArrayStore;
 import net.runelite.asm.attributes.code.instructions.CheckCast;
 import net.runelite.asm.attributes.code.instructions.Dup;
 import net.runelite.asm.attributes.code.instructions.IMul;
-import net.runelite.asm.attributes.code.instructions.InvokeStatic;
-import net.runelite.asm.attributes.code.instructions.InvokeVirtual;
 import net.runelite.asm.attributes.code.instructions.LDC;
 import net.runelite.asm.attributes.code.instructions.LMul;
 import net.runelite.asm.attributes.code.instructions.PutField;
@@ -41,7 +39,6 @@ import net.runelite.deob.DeobAnnotations;
 
 public class InjectHook extends AbstractInjector
 {
-	private static final Signature HOOK_SIG = new Signature("(I)V");
 	private static final String CLINIT = "<clinit>";
 	private static final Type FIELDHOOK = new Type("Lnet/runelite/api/mixins/FieldHook;");
 
@@ -310,7 +307,7 @@ public class InjectHook extends AbstractInjector
 			idx = recursivelyPush(ins, idx, index);
 		}
 
-		Instruction invoke = getInvokeFor(ins, hookInfo, signature);
+		Instruction invoke = hookInfo.getInvoke(ins);
 		ins.getInstructions().add(idx++, invoke);
 	}
 
@@ -338,9 +335,7 @@ public class InjectHook extends AbstractInjector
 		if (!hookInfo.method.isStatic())
 		{
 			if (objectPusher == null)
-			{
 				throw new Injexception("Null object pusher");
-			}
 
 			idx = recursivelyPush(ins, idx, objectPusher);
 		}
@@ -354,41 +349,29 @@ public class InjectHook extends AbstractInjector
 			ins.getInstructions().add(idx++, new LDC(ins, -1));
 		}
 
-		Instruction invoke = getInvokeFor(ins, hookInfo);
+		Instruction invoke = hookInfo.getInvoke(ins);
 		ins.getInstructions().add(idx++, invoke);
-	}
-
-	private Instruction getInvokeFor(Instructions ins, HookInfo hook)
-	{
-		return getInvokeFor(ins, hook, HOOK_SIG);
-	}
-
-	private Instruction getInvokeFor(Instructions ins, HookInfo hook, Signature sig) {
-		if (hook.method.isStatic()) {
-			return new InvokeStatic(ins,
-				new net.runelite.asm.pool.Method(
-					hook.targetClass,
-					hook.method.getName(),
-					sig
-				)
-			);
-		} else {
-			return new InvokeVirtual(ins,
-				new net.runelite.asm.pool.Method(
-					hook.targetClass,
-					hook.method.getName(),
-					sig
-				)
-			);
-		}
 	}
 
 	@AllArgsConstructor
 	static class HookInfo
 	{
-		Class targetClass;
-		Method method;
-		boolean before;
-		Number getter;
+		final Class targetClass;
+		final Method method;
+		final boolean before;
+		final Number getter;
+
+		Instruction getInvoke(Instructions instructions)
+		{
+			return InjectUtil.createInvokeFor(
+				instructions,
+				new net.runelite.asm.pool.Method(
+					targetClass,
+					method.getName(),
+					method.getDescriptor()
+				),
+				method.isStatic()
+			);
+		}
 	}
 }
