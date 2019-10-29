@@ -9,7 +9,6 @@ import com.openosrs.injector.injectors.MixinInjector;
 import com.openosrs.injector.injectors.RSApiInjector;
 import com.openosrs.injector.injectors.raw.ClearColorBuffer;
 import com.openosrs.injector.injectors.raw.DrawAfterWidgets;
-import com.openosrs.injector.injectors.raw.HidePlayerAttacks;
 import com.openosrs.injector.injectors.raw.Occluder;
 import com.openosrs.injector.injectors.raw.RasterizerHook;
 import com.openosrs.injector.injectors.raw.RenderDraw;
@@ -69,7 +68,7 @@ public class Injection extends InjectData implements InjectTaskHandler
 
 		// inject(new HidePlayerAttacks(this));
 
-		new RSApiValidator(this).validate();
+		new InjectorValidator(this).validate();
 	}
 
 	public void save(File outputJar) throws IOException
@@ -91,9 +90,17 @@ public class Injection extends InjectData implements InjectTaskHandler
 
 		log.lifecycle("{} {}", name, injector.getCompletionMsg());
 
-		if (!injector.validate())
+		if (injector instanceof Validator)
+			validate((Validator) injector);
+	}
+
+	private void validate(Validator validator) throws Injexception
+	{
+		final String name = validator.getName();
+
+		if (!validator.validate())
 		{
-			throw new Injexception(String.format("%s failed validation", name));
+			throw new Injexception(name + " failed validation");
 		}
 	}
 

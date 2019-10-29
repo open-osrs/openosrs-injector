@@ -38,4 +38,9 @@ public class RSApiMethod implements Annotated, Named
 	{
 		return (accessFlags & Opcodes.ACC_SYNTHETIC) != 0;
 	}
+
+	public boolean isDefault()
+	{
+		return (accessFlags & (Opcodes.ACC_ABSTRACT | Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC)) == 1;
+	}
 }

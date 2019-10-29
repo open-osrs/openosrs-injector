@@ -413,11 +413,6 @@ public class InjectHook extends AbstractInjector
 		}
 	}
 
-	public String getName()
-	{
-		return super.getName();
-	}
-
 	@AllArgsConstructor
 	static class HookInfo
 	{
