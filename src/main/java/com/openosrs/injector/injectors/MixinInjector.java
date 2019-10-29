@@ -534,7 +534,7 @@ public class MixinInjector extends AbstractInjector
 
 				if (deobTypeClass != null)
 				{
-					Type newType = new Type("L" + inject.toVanilla(deobTypeClass) + ";");
+					Type newType = new Type("L" + inject.toVanilla(deobTypeClass).getName() + ";");
 
 					((ANewArray) i).setType(newType);
 					log.debug("Replaced {} type {} with type {}", i, type, newType);
