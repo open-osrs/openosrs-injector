@@ -19,6 +19,7 @@ import net.runelite.asm.Method;
 import net.runelite.asm.Type;
 import net.runelite.asm.attributes.Code;
 import net.runelite.asm.attributes.annotation.Annotation;
+import net.runelite.asm.attributes.annotation.ArrayElement;
 import net.runelite.asm.attributes.code.Instruction;
 import net.runelite.asm.attributes.code.Instructions;
 import net.runelite.asm.attributes.code.instruction.types.FieldInstruction;
@@ -28,7 +29,6 @@ import net.runelite.asm.attributes.code.instruction.types.PushConstantInstructio
 import net.runelite.asm.attributes.code.instruction.types.ReturnInstruction;
 import net.runelite.asm.attributes.code.instructions.ALoad;
 import net.runelite.asm.attributes.code.instructions.ANewArray;
-import net.runelite.asm.attributes.code.instructions.CheckCast;
 import net.runelite.asm.attributes.code.instructions.GetField;
 import net.runelite.asm.attributes.code.instructions.ILoad;
 import net.runelite.asm.attributes.code.instructions.InvokeDynamic;
@@ -78,7 +78,7 @@ public class MixinInjector extends AbstractInjector
 
 		for (Map.Entry<Provider<ClassFile>, List<ClassFile>> entry : mixinTargets.entrySet())
 		{
-			findShadowFields(entry.getKey(), entry.getValue());
+			findShadowFields(entry.getKey());
 		}
 
 		log.info("Shadowed {} fields", shadowFields.size());
@@ -106,8 +106,6 @@ public class MixinInjector extends AbstractInjector
 				// to make sure we aren't changing code in all classes at once
 				if (MIXIN.equals(annotation.getType()))
 				{
-					final String str = ((org.objectweb.asm.Type) annotation.getElement().getValue()).getInternalName();
-
 					builder.put(
 						new Provider<ClassFile>()
 						{
@@ -117,7 +115,7 @@ public class MixinInjector extends AbstractInjector
 								return mixinClass;
 							}
 						},
-						ImmutableList.of(inject.toVanilla(inject.toDeob(str)))
+						ImmutableList.of(InjectUtil.getVanillaClassFromAnnotationString(inject, annotation))
 					);
 				}
 				else if (MIXINS.equals(annotation.getType()))
@@ -141,15 +139,18 @@ public class MixinInjector extends AbstractInjector
 						}
 					};
 
-					final List<ClassFile> targetClasses = annotation
-						.getElements()
-						.stream()
-						.map(e -> ((org.objectweb.asm.Type) e.getValue()).getInternalName())
-						.map(inject::toDeob)
-						.map(inject::toVanilla)
-						.collect(ImmutableList.toImmutableList());
+					assert annotation.getElement() instanceof ArrayElement;
+					ArrayElement arr = (ArrayElement) annotation.getElement();
 
-					builder.put(mixinProvider, targetClasses);
+					ImmutableList.Builder<ClassFile> b = ImmutableList.builder();
+
+					for (Object ob : arr)
+					{
+						assert ob instanceof Annotation;
+						b.add(InjectUtil.getVanillaClassFromAnnotationString(inject, (Annotation) ob));
+					}
+
+					builder.put(mixinProvider, b.build());
 				}
 			}
 		}
@@ -195,7 +196,7 @@ public class MixinInjector extends AbstractInjector
 		}
 	}
 
-	private void findShadowFields(Provider<ClassFile> mixinProvider, List<ClassFile> targetClasses) throws Injexception
+	private void findShadowFields(Provider<ClassFile> mixinProvider) throws Injexception
 	{
 		final ClassFile mixinClass = mixinProvider.get();
 
@@ -267,7 +268,7 @@ public class MixinInjector extends AbstractInjector
 					throw new Injexception("Mixin methods cannot have more parameters than their corresponding ob method");
 				}
 
-				Method copy = new Method(targetClass, "copy$" + copiedName, sourceMethod.getObfuscatedSignature());
+				Method copy = new Method(targetClass, "copy$" + copiedName, sourceMethod.getDescriptor());
 				moveCode(copy, sourceMethod.getCode());
 				copy.setAccessFlags(sourceMethod.getAccessFlags());
 				copy.setPublic();
@@ -444,32 +445,32 @@ public class MixinInjector extends AbstractInjector
 						throw new Injexception("Mixin methods cannot have more parameters than their corresponding ob method");
 					}
 
-					Type returnType = mixinMethod.getDescriptor().getReturnValue();
-					Type deobReturnType = InjectUtil.apiToDeob(inject, returnType);
-					if (!returnType.equals(deobReturnType))
-					{
-						ClassFile deobReturnTypeClassFile = inject.getDeobfuscated()
-							.findClass(deobReturnType.getInternalName());
-						if (deobReturnTypeClassFile != null)
-						{
-							ClassFile obReturnTypeClass = inject.toVanilla(deobReturnTypeClassFile);
+					//Type returnType = mixinMethod.getDescriptor().getReturnValue();
+					//Type deobReturnType = InjectUtil.apiToDeob(inject, returnType);
+					//if (!returnType.equals(deobReturnType))
+					//{
+					//	ClassFile deobReturnTypeClassFile = inject.getDeobfuscated()
+					//		.findClass(deobReturnType.getInternalName());
+					//	if (deobReturnTypeClassFile != null)
+					//	{
+					//		ClassFile obReturnTypeClass = inject.toVanilla(deobReturnTypeClassFile);
 
-							Instructions instructions = mixinMethod.getCode().getInstructions();
-							ListIterator<Instruction> listIter = instructions.listIterator();
-							while (listIter.hasNext())
-							{
-								Instruction instr = listIter.next();
-								if (instr instanceof ReturnInstruction)
-								{
-									listIter.previous();
-									CheckCast checkCast = new CheckCast(instructions);
-									checkCast.setType(new Type(obReturnTypeClass.getName()));
-									listIter.add(checkCast);
-									listIter.next();
-								}
-							}
-						}
-					}
+					//		Instructions instructions = mixinMethod.getCode().getInstructions();
+					//		ListIterator<Instruction> listIter = instructions.listIterator();
+					//		while (listIter.hasNext())
+					//		{
+					//			Instruction instr = listIter.next();
+					//			if (instr instanceof ReturnInstruction)
+					//			{
+					//				listIter.previous();
+					//				CheckCast checkCast = new CheckCast(instructions);
+					//				checkCast.setType(new Type(obReturnTypeClass.getName()));
+					//				listIter.add(checkCast);
+					//				listIter.next();
+					//			}
+					//		}
+					//	}
+					//}
 
 					moveCode(obMethod, mixinMethod.getCode());
 

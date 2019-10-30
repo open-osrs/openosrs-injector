@@ -31,7 +31,7 @@ import net.runelite.asm.pool.Class;
 import net.runelite.asm.signature.Signature;
 import net.runelite.deob.DeobAnnotations;
 
-public class InjectUtil
+public interface InjectUtil
 {
 	/**
 	 * Finds a static method in deob and converts it to ob
@@ -40,7 +40,7 @@ public class InjectUtil
 	 * @param name The name of the method you want to find
 	 * @return The obfuscated version of the found method
 	 */
-	public static Method findStaticMethod(InjectData data, String name) throws Injexception
+	static Method findStaticMethod(InjectData data, String name) throws Injexception
 	{
 		return findStaticMethod(data, name, null, null);
 	}
@@ -55,10 +55,10 @@ public class InjectUtil
 	 *
 	 * @return The obfuscated version of the found method
 	 */
-	public static Method findStaticMethod(InjectData data, String name, String classHint, Signature sig) throws Injexception
+	static Method findStaticMethod(InjectData data, String name, String classHint, Signature sig) throws Injexception
 	{
 		final ClassGroup deob = data.getDeobfuscated();
-		Method method = null;
+		Method method;
 
 		if (classHint != null)
 		{
@@ -95,7 +95,7 @@ public class InjectUtil
 		throw new Injexception("Static method " + name + " doesn't exist");
 	}
 
-	private static ClassFile findClassOrThrow(ClassGroup group, String name) throws Injexception
+	static ClassFile findClassOrThrow(ClassGroup group, String name) throws Injexception
 	{
 		ClassFile clazz = group.findClass(name);
 		if (clazz == null)
@@ -112,12 +112,12 @@ public class InjectUtil
 	 *
 	 * @return The obfuscated version of the found method
 	 */
-	public static Method findStaticMethod(InjectData data, net.runelite.asm.pool.Method pool) throws Injexception
+	static Method findStaticMethod(InjectData data, net.runelite.asm.pool.Method pool) throws Injexception
 	{
 		return findStaticMethod(data, pool.getName(), pool.getClazz().getName(), pool.getType());
 	}
 
-	public static Method findMethodWithArgs(InjectData data, String name, String hintClass, Signature sig) throws Injexception
+	static Method findMethodWithArgs(InjectData data, String name, String hintClass, Signature sig) throws Injexception
 	{
 		final ClassGroup deob = data.getDeobfuscated();
 		if (hintClass != null)
@@ -137,7 +137,7 @@ public class InjectUtil
 		throw new Injexception("Method called " + name + " with args matching " + sig + " doesn't exist");
 	}
 
-	public static Method findMethodWithArgsDeep(InjectData data, ClassFile clazz, String name, Signature sig) throws Injexception
+	static Method findMethodWithArgsDeep(InjectData data, ClassFile clazz, String name, Signature sig) throws Injexception
 	{
 		do
 			for (Method m : clazz.getMethods())
@@ -151,19 +151,7 @@ public class InjectUtil
 	/**
 	 * Fail-fast implementation of ClassGroup.findStaticMethod
 	 */
-	public static Method findStaticMethod(ClassGroup group, String name) throws Injexception
-	{
-		Method m = group.findStaticMethod(name);
-		if (m == null)
-			throw new Injexception(String.format("Method %s couldn't be found", name));
-
-		return m;
-	}
-
-	/**
-	 * Fail-fast implementation of ClassGroup.findStaticMethod
-	 */
-	public static Method findStaticMethod(ClassGroup group, String name, Signature type) throws Injexception
+	static Method findStaticMethod(ClassGroup group, String name, Signature type) throws Injexception
 	{
 		Method m = group.findStaticMethod(name, type);
 		if (m == null)
@@ -176,20 +164,7 @@ public class InjectUtil
 	/**
 	 * Fail-fast implementation of ClassFile.findMethodDeep
 	 */
-	public static Method findMethodDeep(ClassFile clazz, String name) throws Injexception
-	{
-		Method m = clazz.findMethodDeep(name);
-		if (m == null)
-		{
-			throw new Injexception(String.format("Method %s couldn't be found", name));
-		}
-		return m;
-	}
-
-	/**
-	 * Fail-fast implementation of ClassFile.findMethodDeep
-	 */
-	public static Method findMethodDeep(ClassFile clazz, String name, Signature type) throws Injexception
+	static Method findMethodDeep(ClassFile clazz, String name, Signature type) throws Injexception
 	{
 		Method m = clazz.findMethodDeep(name, type);
 		if (m == null)
@@ -204,7 +179,7 @@ public class InjectUtil
 	 *
 	 * well...
 	 */
-	public static Field findStaticField(ClassGroup group, String name) throws Injexception
+	static Field findStaticField(ClassGroup group, String name) throws Injexception
 	{
 		for (ClassFile clazz : group)
 		{
@@ -227,10 +202,10 @@ public class InjectUtil
 	 *
 	 * @return The obfuscated version of the found field
 	 */
-	public static Field findStaticField(InjectData data, String name, String classHint, Type type) throws Injexception
+	static Field findStaticField(InjectData data, String name, String classHint, Type type) throws Injexception
 	{
 		final ClassGroup deob = data.getDeobfuscated();
-		Field field = null;
+		Field field;
 
 		if (classHint != null)
 		{
@@ -279,7 +254,7 @@ public class InjectUtil
 	 *
 	 * @return The obfuscated version of the found field
 	 */
-	public static Field findStaticField(InjectData data, net.runelite.asm.pool.Field pool) throws Injexception
+	static Field findStaticField(InjectData data, net.runelite.asm.pool.Field pool) throws Injexception
 	{
 		return findStaticField(data, pool.getName(), pool.getClazz().getName(), pool.getType());
 	}
@@ -287,7 +262,7 @@ public class InjectUtil
 	/**
 	 * Fail-fast implementation of ClassGroup.findFieldDeep
 	 */
-	public static Field findFieldDeep(ClassFile clazz, String name) throws Injexception
+	static Field findFieldDeep(ClassFile clazz, String name) throws Injexception
 	{
 		do
 		{
@@ -301,13 +276,13 @@ public class InjectUtil
 		throw new Injexception("Couldn't find field " + name);
 	}
 
-	public static Field findField(InjectData data, String name, String hintClass) throws Injexception
+	static Field findField(InjectData data, String name, String hintClass) throws Injexception
 	{
 		final ClassGroup deob = data.getDeobfuscated();
 		return data.toVanilla(findField(deob, name, hintClass));
 	}
 
-	public static Field findField(ClassGroup group, String name, String hintClass) throws Injexception
+	static Field findField(ClassGroup group, String name, String hintClass) throws Injexception
 	{
 		Field field;
 		if (hintClass != null)
@@ -333,12 +308,12 @@ public class InjectUtil
 		throw new Injexception("Field " + name + " doesn't exist");
 	}
 
-	public static ClassFile fromApiMethod(InjectData data, RSApiMethod apiMethod)
+	static ClassFile fromApiMethod(InjectData data, RSApiMethod apiMethod)
 	{
 		return data.toVanilla(data.toDeob(apiMethod.getClazz().getName()));
 	}
 
-	public static Signature apiToDeob(InjectData data, Signature api)
+	static Signature apiToDeob(InjectData data, Signature api)
 	{
 		return new Signature.Builder()
 			.setReturnType(apiToDeob(data, api.getReturnValue()))
@@ -349,7 +324,7 @@ public class InjectUtil
 			).build();
 	}
 
-	public static Type apiToDeob(InjectData data, Type api)
+	static Type apiToDeob(InjectData data, Type api)
 	{
 		if (api.isPrimitive())
 		{
@@ -392,7 +367,7 @@ public class InjectUtil
 		return api;
 	}
 
-	public static Type deobToVanilla(InjectData data, Type deobT)
+	static Type deobToVanilla(InjectData data, Type deobT)
 	{
 		if (deobT.isPrimitive())
 		{
@@ -408,12 +383,12 @@ public class InjectUtil
 		return Type.getType("L" + data.toVanilla(deobClass).getName() + ";", deobT.getDimensions());
 	}
 
-	public static boolean apiToDeobSigEquals(InjectData data, Signature deobSig, Signature apiSig)
+	static boolean apiToDeobSigEquals(InjectData data, Signature deobSig, Signature apiSig)
 	{
 		return deobSig.equals(apiToDeob(data, apiSig));
 	}
 
-	public static boolean argsMatch(Signature a, Signature b)
+	static boolean argsMatch(Signature a, Signature b)
 	{
 		List<Type> aa = a.getArguments();
 		List<Type> bb = b.getArguments();
@@ -439,7 +414,7 @@ public class InjectUtil
 	 *
 	 * If the annotation doesn't exist return the current name instead.
 	 */
-	public static <T extends Annotated & Named> String getObfuscatedName(T from)
+	static <T extends Annotated & Named> String getObfuscatedName(T from)
 	{
 		Annotation name = from.getAnnotations().find(DeobAnnotations.OBFUSCATED_NAME);
 		return name == null ? from.getName() : name.getElement().getString();
@@ -448,7 +423,7 @@ public class InjectUtil
 	/**
 	 * Gets the value of the @Export annotation on the object.
 	 */
-	public static String getExportedName(Annotated from)
+	static String getExportedName(Annotated from)
 	{
 		Annotation export = from.getAnnotations().find(DeobAnnotations.EXPORT);
 		return export == null ? null : export.getElement().getString();
@@ -457,7 +432,7 @@ public class InjectUtil
 	/**
 	 * Creates the correct load instruction for the variable with Type type and var index index.
 	 */
-	public static Instruction createLoadForTypeIndex(Instructions instructions, Type type, int index)
+	static Instruction createLoadForTypeIndex(Instructions instructions, Type type, int index)
 	{
 		if (type.getDimensions() > 0 || !type.isPrimitive())
 		{
@@ -486,7 +461,7 @@ public class InjectUtil
 	/**
 	 * Creates the right return instruction for an object with Type type
 	 */
-	public static Instruction createReturnForType(Instructions instructions, Type type)
+	static Instruction createReturnForType(Instructions instructions, Type type)
 	{
 		if (!type.isPrimitive())
 		{
@@ -514,7 +489,7 @@ public class InjectUtil
 		}
 	}
 
-	public static Instruction createInvokeFor(Instructions instructions, net.runelite.asm.pool.Method method, boolean isStatic)
+	static Instruction createInvokeFor(Instructions instructions, net.runelite.asm.pool.Method method, boolean isStatic)
 	{
 		if (isStatic)
 		{
@@ -524,5 +499,15 @@ public class InjectUtil
 		{
 			return new InvokeVirtual(instructions, method);
 		}
+	}
+
+	/**
+	 * Legit fuck annotations
+	 */
+	static ClassFile getVanillaClassFromAnnotationString(InjectData data, Annotation annotation)
+	{
+		Object v = annotation.getElement().getValue();
+		String str = ((org.objectweb.asm.Type) v).getInternalName();
+		return data.toVanilla(data.toDeob(str));
 	}
 }

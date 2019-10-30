@@ -10,7 +10,7 @@ public class RSApiClassVisitor extends ClassVisitor
 {
 	private final RSApiClass apiClass;
 
-	public RSApiClassVisitor(RSApiClass apiClass)
+	RSApiClassVisitor(RSApiClass apiClass)
 	{
 		super(Opcodes.ASM5);
 		this.apiClass = apiClass;
