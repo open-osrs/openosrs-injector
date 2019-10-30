@@ -1,9 +1,7 @@
 package com.openosrs.injector
 
 import com.openosrs.injector.injection.InjectTaskHandler
-import com.openosrs.injector.rsapi.RSApi
 import org.gradle.api.DefaultTask
-import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
@@ -12,29 +10,29 @@ open class Inject: DefaultTask() {
     @InputFile
     val vanilla = project.objects.fileProperty()
 
-    @InputDirectory
-    val rsclient = project.objects.directoryProperty()
+    @InputFile
+    val rsclient = project.objects.fileProperty()
 
-    @InputDirectory
-    val mixins = project.objects.directoryProperty()
+    @InputFile
+    val mixins = project.objects.fileProperty()
 
-    @InputDirectory
-    val rsapi = project.objects.directoryProperty()
+    @InputFile
+    val rsapi = project.objects.fileProperty()
 
     @OutputFile
     val output = project.objects.fileProperty().convention {
-        project.file("${project.buildDir}/libs/${project.name}-${project.version}")
+        project.file("${project.buildDir}/libs/${project.name}-${project.version}.jar")
     }
 
     @TaskAction
     fun inject() {
         val vanilla = this.vanilla.get().asFile
-        val rsclient = this.rsclient.asFileTree
-        val mixins = this.mixins.asFileTree
-        val rsapi = this.rsapi.asFileTree
+        val rsclient = this.rsclient.get().asFile
+        val mixins = this.mixins.get().asFile
+        val rsapi = project.zipTree(this.rsapi)
         val output = this.output.asFile
 
-        val injector: InjectTaskHandler = Injection(vanilla, rsclient, rsapi, mixins)
+        val injector: InjectTaskHandler = Injection(vanilla, rsclient, mixins, rsapi)
 
         injector.inject()
 

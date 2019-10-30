@@ -25,12 +25,12 @@ public class Injection extends InjectData implements InjectTaskHandler
 {
 	private static final Logger log = Logging.getLogger(Injection.class);
 
-	public Injection(File vanilla, FileTree rsclient, FileTree rsapi, FileTree mixins) throws Injexception, IOException
+	public Injection(File vanilla, File rsclient, File mixins, FileTree rsapi) throws Injexception, IOException
 	{
 		super(
 			JarUtil.loadJar(vanilla),
-			JarUtil.loadClasses(rsclient.getFiles()),
-			JarUtil.loadClasses(mixins.getFiles()),
+			JarUtil.loadJar(rsclient),
+			JarUtil.loadJar(mixins),
 			new RSApi(rsapi)
 		);
 	}

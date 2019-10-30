@@ -3,10 +3,12 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     id("java-gradle-plugin")
     kotlin("jvm") version "1.3.50"
+    `maven-publish`
 }
 
 group = "com.openosrs"
-version = "1.5.37-SNAPSHOT"
+version = "1.0.0"
+extra["mainver"] = "1.5.37-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -21,7 +23,7 @@ dependencies {
     annotationProcessor("org.projectlombok:lombok:1.18.10")
 
     implementation(kotlin("stdlib-jdk8"))
-    implementation("com.openosrs:deobfuscator:${project.version}") {
+    implementation("com.openosrs:deobfuscator:${extra["mainver"]}") {
         exclude("org.slf4j", "slf4j-simple")
     }
     implementation("com.google.guava:guava:28.1-jre")
@@ -29,10 +31,8 @@ dependencies {
     implementation("org.projectlombok:lombok:1.18.10")
 
     testImplementation("junit:junit:4.12")
-    testImplementation("com.openosrs:mixins:${project.version}")
-   // testRuntimeOnly("com.openosrs.rs:rs-client:${project.version}")
-    testCompileOnly("com.openosrs.rs:runescape-api:${project.version}")
-   // testRuntimeOnly("net.runelite.rs:vanilla")
+    testImplementation("com.openosrs:mixins:${extra["mainver"]}")
+    testCompileOnly("com.openosrs.rs:runescape-api:${extra["mainver"]}")
 }
 
 gradlePlugin {
