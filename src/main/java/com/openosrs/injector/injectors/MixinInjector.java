@@ -248,7 +248,7 @@ public class MixinInjector extends AbstractInjector
 
 				if (mixinMethod.isStatic())
 				{
-					deobSourceMethod = InjectUtil.findStaticMethod(inject.getDeobfuscated(), copiedName, mixinMethod.getDescriptor().rsApiToRsClient());
+					deobSourceMethod = InjectUtil.findMethod(inject.getDeobfuscated(), copiedName, mixinMethod.getDescriptor().rsApiToRsClient());
 				}
 				else
 				{

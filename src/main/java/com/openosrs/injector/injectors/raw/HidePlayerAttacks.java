@@ -1,11 +1,9 @@
 package com.openosrs.injector.injectors.raw;
 
 import com.openosrs.injector.InjectUtil;
-import com.openosrs.injector.Injection;
 import com.openosrs.injector.Injexception;
 import com.openosrs.injector.injection.InjectData;
 import com.openosrs.injector.injectors.AbstractInjector;
-import com.openosrs.injector.injectors.Injector;
 import java.util.Iterator;
 import java.util.ListIterator;
 import net.runelite.asm.Method;
@@ -34,7 +32,7 @@ public class HidePlayerAttacks extends AbstractInjector
 
 	public void inject() throws Injexception
 	{
-		final Method addPlayerOptions = InjectUtil.findStaticMethod(inject, "addPlayerToMenu");
+		final Method addPlayerOptions = InjectUtil.findMethod(inject, "addPlayerToMenu");
 		final net.runelite.asm.pool.Method shouldHideAttackOptionFor = inject.getVanilla().findClass("client").findMethod("shouldHideAttackOptionFor").getPoolMethod();
 
 		injectHideAttack(addPlayerOptions, shouldHideAttackOptionFor);

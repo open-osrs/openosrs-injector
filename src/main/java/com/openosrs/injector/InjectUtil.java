@@ -30,6 +30,7 @@ import net.runelite.asm.attributes.code.instructions.VReturn;
 import net.runelite.asm.pool.Class;
 import net.runelite.asm.signature.Signature;
 import net.runelite.deob.DeobAnnotations;
+import org.jetbrains.annotations.Nullable;
 
 public interface InjectUtil
 {
@@ -40,9 +41,9 @@ public interface InjectUtil
 	 * @param name The name of the method you want to find
 	 * @return The obfuscated version of the found method
 	 */
-	static Method findStaticMethod(InjectData data, String name) throws Injexception
+	static Method findMethod(InjectData data, String name) throws Injexception
 	{
-		return findStaticMethod(data, name, null, null);
+		return findMethod(data, name, null, null);
 	}
 
 	/**
@@ -55,44 +56,84 @@ public interface InjectUtil
 	 *
 	 * @return The obfuscated version of the found method
 	 */
-	static Method findStaticMethod(InjectData data, String name, String classHint, Signature sig) throws Injexception
+	static Method findMethod(
+		InjectData data,
+		String name,
+		String classHint,
+		Signature sig)
+	throws Injexception
+	{
+		return findMethod(data, name, classHint, sig, false, false);
+	}
+
+	/**
+	 * Finds a method in injectData's deobfuscated classes.
+	 *
+	 * @param data InjectData instance
+	 * @param name (Exported) method name
+	 * @param classHint The (exported) name of a class you expect (or know) the method to be in, or null, if you're not sure
+	 * @throws Injexception If the hint class couldn't be found, or no method matching the settings was found
+	 */
+	static Method findMethod(
+		InjectData data,
+		String name,
+		@Nullable String classHint)
+	throws Injexception
+	{
+		return findMethod(data, name, classHint, null, false, false);
+	}
+
+	/**
+	 * Finds a method in injectData's deobfuscated classes.
+	 *
+	 * @param data InjectData instance
+	 * @param name (Exported) method name
+	 * @param classHint The (exported) name of a class you expect (or know) the method to be in, or null, if you're not sure
+	 * @param sig The deobfuscated methods' signature, or null, if you're unsure
+	 * @param notStatic If this is true, only check non-static methods. If classHint isn't null, check only subclasses
+	 * @param returnDeob If this is true, this method will return the deobfuscated method, instead of turning it into vanilla first
+	 *
+	 * @throws Injexception If the hint class couldn't be found, or no method matching the settings was found
+	 */
+	static Method findMethod(
+		InjectData data,
+		String name,
+		@Nullable String classHint,
+		@Nullable Signature sig,
+		boolean notStatic,
+		boolean returnDeob)
+	throws Injexception
 	{
 		final ClassGroup deob = data.getDeobfuscated();
-		Method method;
-
 		if (classHint != null)
 		{
-			ClassFile clazz = findClassOrThrow(deob, classHint);
-
-			if (sig == null)
+			ClassFile cf;
+			Method m;
+			cf = findClassOrThrow(deob, classHint);
+			if (notStatic)
 			{
-				method = clazz.findStaticMethod(name);
+				if (sig == null)
+					m = cf.findMethodDeep(name);
+				else
+					m = cf.findMethodDeep(name, sig);
+				if (m == null)
+					throw new Injexception(String.format("Couldn't find %s in subclasses of %s", name, classHint));
 			}
 			else
-			{
-				method = clazz.findStaticMethod(name, sig);
-			}
+				m = cf.findMethod(name);
 
-			if (method != null)
-				return data.toVanilla(method);
+			if (m != null)
+				return returnDeob ? m : data.toVanilla(m);
 		}
 
-		for (ClassFile clazz : deob)
-		{
-			if (sig == null)
-			{
-				method = clazz.findStaticMethod(name);
-			}
-			else
-			{
-				method = clazz.findStaticMethod(name, sig);
-			}
+		for (ClassFile cf : deob)
+			for (Method m : cf.getMethods())
+				if (m.getName().equals(name))
+					if (!notStatic || !m.isStatic())
+						if (sig == null || sig.equals(m.getDescriptor()))
+							return returnDeob ? m : data.toVanilla(m);
 
-			if (method != null)
-				return data.toVanilla(method);
-		}
-
-		throw new Injexception("Static method " + name + " doesn't exist");
+		throw new Injexception(String.format("Couldn't find %s", name));
 	}
 
 	static ClassFile findClassOrThrow(ClassGroup group, String name) throws Injexception
@@ -102,19 +143,6 @@ public interface InjectUtil
 			throw new Injexception("Hint class " + name + " doesn't exist");
 
 		return clazz;
-	}
-
-	/**
-	 * Finds a static method in deob and converts it to ob
-	 *
-	 * @param data InjectData instance
-	 * @param pool Pool method of the method you want
-	 *
-	 * @return The obfuscated version of the found method
-	 */
-	static Method findStaticMethod(InjectData data, net.runelite.asm.pool.Method pool) throws Injexception
-	{
-		return findStaticMethod(data, pool.getName(), pool.getClazz().getName(), pool.getType());
 	}
 
 	static Method findMethodWithArgs(InjectData data, String name, String hintClass, Signature sig) throws Injexception
@@ -151,13 +179,12 @@ public interface InjectUtil
 	/**
 	 * Fail-fast implementation of ClassGroup.findStaticMethod
 	 */
-	static Method findStaticMethod(ClassGroup group, String name, Signature type) throws Injexception
+	static Method findMethod(ClassGroup group, String name, Signature type) throws Injexception
 	{
 		Method m = group.findStaticMethod(name, type);
 		if (m == null)
-		{
 			throw new Injexception(String.format("Method %s couldn't be found", name + type.toString()));
-		}
+
 		return m;
 	}
 
@@ -168,9 +195,8 @@ public interface InjectUtil
 	{
 		Method m = clazz.findMethodDeep(name, type);
 		if (m == null)
-		{
 			throw new Injexception(String.format("Method %s couldn't be found", name + type.toString()));
-		}
+
 		return m;
 	}
 
@@ -185,10 +211,9 @@ public interface InjectUtil
 		{
 			Field f = clazz.findField(name);
 			if (f != null && f.isStatic())
-			{
 				return f;
-			}
 		}
+
 		throw new Injexception("Couldn't find static field " + name);
 	}
 
@@ -212,51 +237,26 @@ public interface InjectUtil
 			ClassFile clazz = findClassOrThrow(deob, classHint);
 
 			if (type == null)
-			{
 				field = clazz.findField(name);
-			}
 			else
-			{
 				field = clazz.findField(name, type);
-			}
 
 			if (field != null)
-			{
 				return data.toVanilla(field);
-			}
 		}
 
 		for (ClassFile clazz : deob)
 		{
 			if (type == null)
-			{
 				field = clazz.findField(name);
-			}
 			else
-			{
 				field = clazz.findField(name, type);
-			}
 
 			if (field != null)
-			{
 				return data.toVanilla(field);
-			}
 		}
 
 		throw new Injexception(String.format("Static field %s doesn't exist", (type != null ? type + " " : "") + name));
-	}
-
-	/**
-	 * Finds a static field in deob and converts it to ob
-	 *
-	 * @param data InjectData instance
-	 * @param pool Pool field of the field you want
-	 *
-	 * @return The obfuscated version of the found field
-	 */
-	static Field findStaticField(InjectData data, net.runelite.asm.pool.Field pool) throws Injexception
-	{
-		return findStaticField(data, pool.getName(), pool.getClazz().getName(), pool.getType());
 	}
 
 	/**
@@ -264,15 +264,13 @@ public interface InjectUtil
 	 */
 	static Field findFieldDeep(ClassFile clazz, String name) throws Injexception
 	{
+		Field f;
+
 		do
-		{
-			Field f = clazz.findField(name);
-			if (f != null)
-			{
+			if ((f = clazz.findField(name)) != null)
 				return f;
-			}
-		}
 		while ((clazz = clazz.getParent()) != null);
+
 		throw new Injexception("Couldn't find field " + name);
 	}
 
@@ -291,19 +289,12 @@ public interface InjectUtil
 
 			field = clazz.findField(name);
 			if (field != null)
-			{
 				return field;
-			}
 		}
 
 		for (ClassFile clazz : group)
-		{
-			field = clazz.findField(name);
-			if (field != null)
-			{
+			if ((field = clazz.findField(name)) != null)
 				return field;
-			}
-		}
 
 		throw new Injexception("Field " + name + " doesn't exist");
 	}
@@ -327,15 +318,11 @@ public interface InjectUtil
 	static Type apiToDeob(InjectData data, Type api)
 	{
 		if (api.isPrimitive())
-		{
 			return api;
-		}
 
 		final String internalName = api.getInternalName();
 		if (internalName.startsWith(API_BASE))
-		{
 			return Type.getType("L" + api.getInternalName().substring(API_BASE.length()) + ";", api.getDimensions());
-		}
 		else if (internalName.startsWith(RL_API_BASE))
 		{
 			Class rlApiC = new Class(internalName);
@@ -370,15 +357,11 @@ public interface InjectUtil
 	static Type deobToVanilla(InjectData data, Type deobT)
 	{
 		if (deobT.isPrimitive())
-		{
 			return deobT;
-		}
 
 		final ClassFile deobClass = data.getDeobfuscated().findClass(deobT.getInternalName());
 		if (deobClass == null)
-		{
 			return deobT;
-		}
 
 		return Type.getType("L" + data.toVanilla(deobClass).getName() + ";", deobT.getDimensions());
 	}
@@ -394,17 +377,11 @@ public interface InjectUtil
 		List<Type> bb = b.getArguments();
 
 		if (aa.size() != bb.size())
-		{
 			return false;
-		}
 
 		for (int i = 0; i < aa.size(); i++)
-		{
 			if (!aa.get(i).equals(bb.get(i)))
-			{
 				return false;
-			}
-		}
 
 		return true;
 	}
@@ -435,9 +412,7 @@ public interface InjectUtil
 	static Instruction createLoadForTypeIndex(Instructions instructions, Type type, int index)
 	{
 		if (type.getDimensions() > 0 || !type.isPrimitive())
-		{
 			return new ALoad(instructions, index);
-		}
 
 		switch (type.toString())
 		{
@@ -464,9 +439,7 @@ public interface InjectUtil
 	static Instruction createReturnForType(Instructions instructions, Type type)
 	{
 		if (!type.isPrimitive())
-		{
 			return new Return(instructions, InstructionType.ARETURN);
-		}
 
 		switch (type.toString())
 		{
@@ -492,13 +465,9 @@ public interface InjectUtil
 	static Instruction createInvokeFor(Instructions instructions, net.runelite.asm.pool.Method method, boolean isStatic)
 	{
 		if (isStatic)
-		{
 			return new InvokeStatic(instructions, method);
-		}
 		else
-		{
 			return new InvokeVirtual(instructions, method);
-		}
 	}
 
 	/**

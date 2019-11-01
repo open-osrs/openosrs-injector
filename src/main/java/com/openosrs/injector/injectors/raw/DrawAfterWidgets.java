@@ -73,7 +73,7 @@ public class DrawAfterWidgets extends AbstractInjector
 
 		boolean injected = false;
 
-		Method noClip = InjectUtil.findStaticMethod(inject, "Rasterizer2D_resetClip", "Rasterizer2D", null); // !!!!!
+		Method noClip = InjectUtil.findMethod(inject, "Rasterizer2D_resetClip", "Rasterizer2D", null); // !!!!!
 
 		if (noClip == null)
 		{

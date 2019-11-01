@@ -10,7 +10,7 @@ import com.openosrs.injector.injectors.RSApiInjector;
 import com.openosrs.injector.injectors.raw.ClearColorBuffer;
 import com.openosrs.injector.injectors.raw.DrawAfterWidgets;
 import com.openosrs.injector.injectors.raw.Occluder;
-import com.openosrs.injector.injectors.raw.RasterizerHook;
+import com.openosrs.injector.injectors.raw.RasterizerAlpha;
 import com.openosrs.injector.injectors.raw.RenderDraw;
 import com.openosrs.injector.injectors.raw.ScriptVM;
 import com.openosrs.injector.rsapi.RSApi;
@@ -41,7 +41,7 @@ public class Injection extends InjectData implements InjectTaskHandler
 
 		inject(new InterfaceInjector(this));
 
-		inject(new RasterizerHook(this));
+		inject(new RasterizerAlpha(this));
 
 		inject(new MixinInjector(this));
 
