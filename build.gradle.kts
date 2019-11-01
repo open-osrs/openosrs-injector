@@ -8,7 +8,6 @@ plugins {
 
 group = "com.openosrs"
 version = "1.0.0"
-extra["mainver"] = "1.5.37-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -23,7 +22,7 @@ dependencies {
     annotationProcessor("org.projectlombok:lombok:1.18.10")
 
     implementation(kotlin("stdlib-jdk8"))
-    implementation("com.openosrs:deobfuscator:${extra["mainver"]}") {
+    implementation("com.openosrs:deobfuscator:1.5.37-SNAPSHOT") {
         exclude("org.slf4j", "slf4j-simple")
     }
     implementation("com.google.guava:guava:28.1-jre")
@@ -31,8 +30,8 @@ dependencies {
     implementation("org.projectlombok:lombok:1.18.10")
 
     testImplementation("junit:junit:4.12")
-    testImplementation("com.openosrs:mixins:${extra["mainver"]}")
-    testCompileOnly("com.openosrs.rs:runescape-api:${extra["mainver"]}")
+    testImplementation("com.openosrs:mixins:1.5.37-SNAPSHOT")
+    testCompileOnly("com.openosrs.rs:runescape-api:1.5.37-SNAPSHOT")
 }
 
 gradlePlugin {
@@ -46,6 +45,7 @@ gradlePlugin {
 
 configure<JavaPluginConvention> {
     sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
 }
 
 val compileKotlin: KotlinCompile by tasks
