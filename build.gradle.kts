@@ -20,18 +20,19 @@ repositories {
 
 dependencies {
     annotationProcessor("org.projectlombok:lombok:1.18.10")
+    compileOnly("org.projectlombok:lombok:1.18.10")
 
     implementation(kotlin("stdlib-jdk8"))
-    implementation("com.openosrs:deobfuscator:1.5.37-SNAPSHOT") {
+    implementation("com.openosrs:deobfuscator:1.5.39-SNAPSHOT") {
         exclude("org.slf4j", "slf4j-simple")
     }
     implementation("com.google.guava:guava:28.1-jre")
     implementation("org.ow2.asm:asm:7.2")
-    implementation("org.projectlombok:lombok:1.18.10")
+
 
     testImplementation("junit:junit:4.12")
-    testImplementation("com.openosrs:mixins:1.5.37-SNAPSHOT")
-    testCompileOnly("com.openosrs.rs:runescape-api:1.5.37-SNAPSHOT")
+    testImplementation("com.openosrs:runelite-mixins:1.5.39-SNAPSHOT")
+    testCompileOnly("com.openosrs.rs:runescape-api:1.5.39-SNAPSHOT")
 }
 
 gradlePlugin {
