@@ -29,6 +29,7 @@ import net.runelite.asm.attributes.code.instruction.types.PushConstantInstructio
 import net.runelite.asm.attributes.code.instruction.types.ReturnInstruction;
 import net.runelite.asm.attributes.code.instructions.ALoad;
 import net.runelite.asm.attributes.code.instructions.ANewArray;
+import net.runelite.asm.attributes.code.instructions.CheckCast;
 import net.runelite.asm.attributes.code.instructions.GetField;
 import net.runelite.asm.attributes.code.instructions.ILoad;
 import net.runelite.asm.attributes.code.instructions.InvokeDynamic;
@@ -89,6 +90,7 @@ public class MixinInjector extends AbstractInjector
 		}
 
 		log.info("Injected {}, copied {}, replaced {} methods", injected, copied, replaced);
+
 		inject.runChildInjector(new InjectHook(inject, mixinTargets));
 
 		inject.runChildInjector(new InjectHookMethod(inject, mixinTargets));
@@ -226,10 +228,10 @@ public class MixinInjector extends AbstractInjector
 
 	private void injectMethods(Provider<ClassFile> mixinProvider, List<ClassFile> targetClasses) throws Injexception
 	{
-		final ClassFile mixinClass = mixinProvider.get();
-
 		for (ClassFile targetClass : targetClasses)
 		{
+			final ClassFile mixinClass = mixinProvider.get();
+
 			// Keeps mappings between methods annotated with @Copy -> the copied method within the vanilla pack
 			Map<net.runelite.asm.pool.Method, CopiedMethod> copiedMethods = new HashMap<>();
 
@@ -243,17 +245,10 @@ public class MixinInjector extends AbstractInjector
 				}
 
 				String copiedName = copyA.getElement().getString();
-				// The method we're copying, deob
-				Method deobSourceMethod;
+				Signature deobSig = InjectUtil.apiToDeob(inject, mixinMethod.getDescriptor());
+				boolean notStat = !mixinMethod.isStatic();
 
-				if (mixinMethod.isStatic())
-				{
-					deobSourceMethod = InjectUtil.findMethod(inject.getDeobfuscated(), copiedName, mixinMethod.getDescriptor().rsApiToRsClient());
-				}
-				else
-				{
-					deobSourceMethod = InjectUtil.findMethodDeep(inject.toDeob(targetClass.getName()), copiedName, mixinMethod.getDescriptor().rsApiToRsClient());
-				}
+				Method deobSourceMethod = InjectUtil.findMethod(inject, copiedName, inject.toDeob(targetClass.getName()).getName(), deobSig, notStat, true);
 
 				if (mixinMethod.isStatic() != deobSourceMethod.isStatic())
 				{
@@ -445,32 +440,32 @@ public class MixinInjector extends AbstractInjector
 						throw new Injexception("Mixin methods cannot have more parameters than their corresponding ob method");
 					}
 
-					//Type returnType = mixinMethod.getDescriptor().getReturnValue();
-					//Type deobReturnType = InjectUtil.apiToDeob(inject, returnType);
-					//if (!returnType.equals(deobReturnType))
-					//{
-					//	ClassFile deobReturnTypeClassFile = inject.getDeobfuscated()
-					//		.findClass(deobReturnType.getInternalName());
-					//	if (deobReturnTypeClassFile != null)
-					//	{
-					//		ClassFile obReturnTypeClass = inject.toVanilla(deobReturnTypeClassFile);
+					Type returnType = mixinMethod.getDescriptor().getReturnValue();
+					Type deobReturnType = InjectUtil.apiToDeob(inject, returnType);
+					if (!returnType.equals(deobReturnType))
+					{
+						ClassFile deobReturnTypeClassFile = inject.getDeobfuscated()
+							.findClass(deobReturnType.getInternalName());
+						if (deobReturnTypeClassFile != null)
+						{
+							ClassFile obReturnTypeClass = inject.toVanilla(deobReturnTypeClassFile);
 
-					//		Instructions instructions = mixinMethod.getCode().getInstructions();
-					//		ListIterator<Instruction> listIter = instructions.listIterator();
-					//		while (listIter.hasNext())
-					//		{
-					//			Instruction instr = listIter.next();
-					//			if (instr instanceof ReturnInstruction)
-					//			{
-					//				listIter.previous();
-					//				CheckCast checkCast = new CheckCast(instructions);
-					//				checkCast.setType(new Type(obReturnTypeClass.getName()));
-					//				listIter.add(checkCast);
-					//				listIter.next();
-					//			}
-					//		}
-					//	}
-					//}
+							Instructions instructions = mixinMethod.getCode().getInstructions();
+							ListIterator<Instruction> listIter = instructions.listIterator();
+							while (listIter.hasNext())
+							{
+								Instruction instr = listIter.next();
+								if (instr instanceof ReturnInstruction)
+								{
+									listIter.previous();
+									CheckCast checkCast = new CheckCast(instructions);
+									checkCast.setType(new Type(obReturnTypeClass.getName()));
+									listIter.add(checkCast);
+									listIter.next();
+								}
+							}
+						}
+					}
 
 					moveCode(obMethod, mixinMethod.getCode());
 

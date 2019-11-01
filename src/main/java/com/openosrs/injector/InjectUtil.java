@@ -179,7 +179,7 @@ public interface InjectUtil
 	/**
 	 * Fail-fast implementation of ClassGroup.findStaticMethod
 	 */
-	static Method findMethod(ClassGroup group, String name, Signature type) throws Injexception
+	static Method findStaticMethod(ClassGroup group, String name, Signature type) throws Injexception
 	{
 		Method m = group.findStaticMethod(name, type);
 		if (m == null)
