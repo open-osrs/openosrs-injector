@@ -80,7 +80,7 @@ public class RasterizerAlpha extends AbstractInjector
 	public void inject() throws Injexception
 	{
 		final Field r2dPx = InjectUtil.findField(inject, "Rasterizer2D_pixels", "Rasterizer2D");
-		final Method draw = InjectUtil.findMethod(inject, "draw", "Client");
+		final Method draw = InjectUtil.findMethod(inject, "drawLoggedIn", "Client");
 		final ClassFile rasterizer2D = r2dPx.getClassFile();
 		final Execution ex = new Execution(rasterizer2D.getGroup());
 		ex.staticStep = false;
@@ -98,6 +98,7 @@ public class RasterizerAlpha extends AbstractInjector
 			int count = 0;
 			int orCount = 0;
 
+			outer:
 			for (InstructionContext ic : mc.getInstructionContexts())
 			{
 				Instruction instruction = ic.getInstruction();
@@ -118,74 +119,75 @@ public class RasterizerAlpha extends AbstractInjector
 				InstructionContext colPusher = colour.getPushed().resolve(colour);
 				Instruction colPushI = colPusher.getInstruction();
 
-				// If it's not a >> or a | we're not interested
-				if (colPushI instanceof LVTInstruction // when called from a method we didn't execute
-					|| colPushI instanceof PushConstantInstruction &&
-					!((PushConstantInstruction) colPushI).getConstant().equals(0)
-					|| colPushI instanceof IALoad)
-				{
-					// OR with 0xFF000000, unless 0
-					int storeIdx = instrs.getInstructions().indexOf(instruction);
-
-					instrs.addInstruction(storeIdx++, new LDC(instrs, ALPHA));
-					instrs.addInstruction(storeIdx, new IOr(instrs, InstructionType.IOR));
-					++orCount;
-					continue;
-				}
-				else if (!(
-					colPushI instanceof IShR ||
+				// If it's not a >> or a >>> or a + it's not alpha
+				if (colPushI instanceof IShR ||
 					colPushI instanceof IUShR ||
-					colPushI instanceof IAdd))
+					colPushI instanceof IAdd)
 				{
+					// So we know we may be dealing with alpha here, now we need the alpha value
+					// earlier on in the method there's been a 256 - XXX, where xxx is alpha.
+					// if that SiPush 256 doesn't exist, we should just | 0xff000000 instead
+					for (InstructionContext ins : mc.getInstructionContexts())
+					{
+						if (!(ins.getInstruction() instanceof SiPush))
+							continue;
+
+						SiPush pci = (SiPush) ins.getInstruction();
+						if ((short) pci.getConstant() != (short) 256)
+							continue;
+
+						InstructionContext isub = ins.getPushes().get(0).getPopped().get(0);
+						if (!(isub.getInstruction() instanceof ISub))
+							continue;
+
+						StackContext alphaPop = isub.getPops().get(0);
+						InstructionContext alphaPusher = alphaPop.getPushed().resolve(alphaPop);
+						InstructionContext isubResult = isub.getPushes().get(0).getPopped().get(0);
+
+						if (pushesToSameField(isubResult, alphaPusher))
+						{
+							alphaPusher = resolveFieldThroughInvokes(alphaPop);
+
+							if (alphaPusher == null)
+								throw new RuntimeException("Alpha var is overwritten and we don't know what pushed it"); // cheeky unchecked
+						}
+
+						int storeIdx = instrs.getInstructions().indexOf(instruction);
+
+						Instruction alphaPushI = alphaPusher.getInstruction();
+						if (alphaPushI instanceof GetStatic)
+						{
+							instrs.addInstruction(storeIdx++, new LDC(instrs, 255));
+							instrs.addInstruction(storeIdx++, new GetStatic(instrs, ((GetStatic) alphaPushI).getField()));
+							instrs.addInstruction(storeIdx++, new ISub(instrs, InstructionType.ISUB));
+						}
+						else if (alphaPushI instanceof LVTInstruction)
+						{
+							instrs.addInstruction(storeIdx++, new ILoad(instrs, ((LVTInstruction) alphaPushI).getVariableIndex()));
+						}
+
+						instrs.getInstructions().set(storeIdx, new InvokeStatic(instrs, DRAWALPHA));
+						++count;
+						continue outer;
+					}
+				}
+
+				// If we're copying from the same field we don't have to apply extra alpha again
+				if (colPushI instanceof IALoad
+					&& isSameField(r2dPx, colPusher.getPops().get(1)))
 					continue;
-				}
 
-				// So we know we're dealing with alpha here, now we need the alpha value
-				// earlier on in the method there's been a 256 - XXX, where xxx is alpha
+				// If the value is 0, it's supposed to be transparent, not black
+				if (colPushI instanceof PushConstantInstruction
+					&& ((PushConstantInstruction) colPushI).getConstant().equals(0))
+					continue;
 
-				for (InstructionContext ins : mc.getInstructionContexts())
-				{
-					if (!(ins.getInstruction() instanceof SiPush))
-						continue;
+				// rasterPx[idx] = color | 0xff000000 (the | 0xff000000 is what's added)
+				int storeIdx = instrs.getInstructions().indexOf(instruction);
 
-					SiPush pci = (SiPush) ins.getInstruction();
-					if ((short) pci.getConstant() != (short) 256)
-						continue;
-
-					InstructionContext isub = ins.getPushes().get(0).getPopped().get(0);
-					if (!(isub.getInstruction() instanceof ISub))
-						continue;
-
-					StackContext alphaPop = isub.getPops().get(0);
-					InstructionContext alphaPusher = alphaPop.getPushed().resolve(alphaPop);
-					InstructionContext isubResult = isub.getPushes().get(0).getPopped().get(0);
-
-					if (pushesToSameField(isubResult, alphaPusher))
-					{
-						alphaPusher = resolveFieldThroughInvokes(alphaPop);
-
-						if (alphaPusher == null)
-							throw new RuntimeException("Alpha var is overwritten and we don't know what pushed it"); // cheeky unchecked
-					}
-
-					int storeIdx = instrs.getInstructions().indexOf(instruction);
-
-					Instruction alphaPushI = alphaPusher.getInstruction();
-					if (alphaPushI instanceof GetStatic)
-					{
-						instrs.addInstruction(storeIdx++, new LDC(instrs, 255));
-						instrs.addInstruction(storeIdx++, new GetStatic(instrs, ((GetStatic) alphaPushI).getField()));
-						instrs.addInstruction(storeIdx++, new ISub(instrs, InstructionType.ISUB));
-					}
-					else if (alphaPushI instanceof LVTInstruction)
-					{
-						instrs.addInstruction(storeIdx++, new ILoad(instrs, ((LVTInstruction) alphaPushI).getVariableIndex()));
-					}
-
-					instrs.getInstructions().set(storeIdx, new InvokeStatic(instrs, DRAWALPHA));
-					++count;
-					break;
-				}
+				instrs.addInstruction(storeIdx++, new LDC(instrs, ALPHA));
+				instrs.addInstruction(storeIdx, new IOr(instrs, InstructionType.IOR));
+				++orCount;
 			}
 
 			if (orCount != 0)
