@@ -5,8 +5,6 @@ import com.openosrs.injector.InjectUtil;
 import com.openosrs.injector.Injexception;
 import com.openosrs.injector.injectors.Injector;
 import com.openosrs.injector.rsapi.RSApi;
-import static com.openosrs.injector.rsapi.RSApi.*;
-import com.openosrs.injector.rsapi.RSApiClass;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -16,7 +14,6 @@ import net.runelite.asm.ClassGroup;
 import net.runelite.asm.Field;
 import net.runelite.asm.Method;
 import net.runelite.asm.Type;
-import net.runelite.asm.pool.Class;
 import net.runelite.asm.signature.Signature;
 
 /**
@@ -154,35 +151,5 @@ public abstract class InjectData
 		{
 			action.accept(pair.getKey(), pair.getValue());
 		}
-	}
-
-	public Type deobfuscatedTypeToApiType(Type type)
-	{
-		if (type.isPrimitive())
-		{
-			return type;
-		}
-
-		ClassFile cf = deobfuscated.findClass(type.getInternalName());
-		if (cf == null)
-		{
-			return type; // not my type
-		}
-
-		RSApiClass apiClass = rsApi.findClass(API_BASE + cf.getName());
-
-		Class rlApiType = null;
-
-		for (Class intf : apiClass.getInterfaces())
-		{
-			if (intf.getName().startsWith(RL_API_BASE))
-			{
-				rlApiType = intf;
-			}
-		}
-
-		final Class finalType = rlApiType == null ? apiClass.getClazz() : rlApiType;
-
-		return Type.getType("L" + finalType.getName() + ";", type.getDimensions());
 	}
 }

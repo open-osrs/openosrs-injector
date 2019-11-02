@@ -6,6 +6,7 @@ import static com.openosrs.injector.rsapi.RSApi.API_BASE;
 import com.openosrs.injector.rsapi.RSApiClass;
 import com.openosrs.injector.rsapi.RSApiMethod;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import net.runelite.asm.Annotated;
 import net.runelite.asm.ClassFile;
@@ -60,7 +61,7 @@ public interface InjectUtil
 		InjectData data,
 		String name,
 		String classHint,
-		Signature sig)
+		@Nullable Predicate<Signature> sig)
 	throws Injexception
 	{
 		return findMethod(data, name, classHint, sig, false, false);
@@ -99,7 +100,7 @@ public interface InjectUtil
 		InjectData data,
 		String name,
 		@Nullable String classHint,
-		@Nullable Signature sig,
+		@Nullable Predicate<Signature> sig,
 		boolean notStatic,
 		boolean returnDeob)
 	throws Injexception
@@ -113,11 +114,9 @@ public interface InjectUtil
 			if (notStatic)
 			{
 				if (sig == null)
-					m = cf.findMethodDeep(name);
+					m = InjectUtil.findMethodDeep(cf, name, s -> true);
 				else
-					m = cf.findMethodDeep(name, sig);
-				if (m == null)
-					throw new Injexception(String.format("Couldn't find %s in subclasses of %s", name, classHint));
+					m = InjectUtil.findMethodDeep(cf, name, sig);
 			}
 			else
 				m = cf.findMethod(name);
@@ -130,7 +129,7 @@ public interface InjectUtil
 			for (Method m : cf.getMethods())
 				if (m.getName().equals(name))
 					if (!notStatic || !m.isStatic())
-						if (sig == null || sig.equals(m.getDescriptor()))
+						if (sig == null || sig.test(m.getDescriptor()))
 							return returnDeob ? m : data.toVanilla(m);
 
 		throw new Injexception(String.format("Couldn't find %s", name));
@@ -145,59 +144,19 @@ public interface InjectUtil
 		return clazz;
 	}
 
-	static Method findMethodWithArgs(InjectData data, String name, String hintClass, Signature sig) throws Injexception
-	{
-		final ClassGroup deob = data.getDeobfuscated();
-		if (hintClass != null)
-		{
-			ClassFile clazz = findClassOrThrow(deob, hintClass);
-			Method method = clazz.findStaticMethod(name);
-
-			if (method != null && argsMatch(sig, method.getDescriptor()))
-				return data.toVanilla(method);
-		}
-
-		for (ClassFile c : deob)
-			for (Method m : c.getMethods())
-				if (m.getName().equals(name) && argsMatch(sig, m.getDescriptor()))
-					return data.toVanilla(m);
-
-		throw new Injexception("Method called " + name + " with args matching " + sig + " doesn't exist");
-	}
-
-	static Method findMethodWithArgsDeep(InjectData data, ClassFile clazz, String name, Signature sig) throws Injexception
+	/**
+	 * Fail-fast implementation of ClassFile.findMethodDeep, using a predicate for signature
+	 */
+	static Method findMethodDeep(ClassFile clazz, String name, Predicate<Signature> type) throws Injexception
 	{
 		do
-			for (Method m : clazz.getMethods())
-				if (m.getName().equals(name) && argsMatch(sig, m.getDescriptor()))
-					return data.toVanilla(m);
+			for (Method method : clazz.getMethods())
+				if (method.getName().equals(name))
+					if (type.test(method.getDescriptor()))
+						return method;
 		while ((clazz = clazz.getParent()) != null);
 
-		throw new Injexception("Method called " + name + " with args matching " + sig + " doesn't exist");
-	}
-
-	/**
-	 * Fail-fast implementation of ClassGroup.findStaticMethod
-	 */
-	static Method findStaticMethod(ClassGroup group, String name, Signature type) throws Injexception
-	{
-		Method m = group.findStaticMethod(name, type);
-		if (m == null)
-			throw new Injexception(String.format("Method %s couldn't be found", name + type.toString()));
-
-		return m;
-	}
-
-	/**
-	 * Fail-fast implementation of ClassFile.findMethodDeep
-	 */
-	static Method findMethodDeep(ClassFile clazz, String name, Signature type) throws Injexception
-	{
-		Method m = clazz.findMethodDeep(name, type);
-		if (m == null)
-			throw new Injexception(String.format("Method %s couldn't be found", name + type.toString()));
-
-		return m;
+		throw new Injexception(String.format("Method %s couldn't be found", name + type.toString()));
 	}
 
 	/**

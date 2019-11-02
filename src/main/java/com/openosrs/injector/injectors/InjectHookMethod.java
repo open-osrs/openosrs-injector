@@ -35,9 +35,7 @@ public class InjectHookMethod extends AbstractInjector
 	public void inject() throws Injexception
 	{
 		for (Map.Entry<Provider<ClassFile>, List<ClassFile>> entry : mixinTargets.entrySet())
-		{
 			injectMethods(entry.getKey(), entry.getValue());
-		}
 
 		log.info("Injected {} method hooks", injected);
 	}
@@ -52,9 +50,7 @@ public class InjectHookMethod extends AbstractInjector
 			{
 				final Annotation methodHook = mixinMethod.getAnnotations().find(METHODHOOK);
 				if (methodHook == null)
-				{
 					continue;
-				}
 
 				if (!mixinMethod.getDescriptor().isVoid())
 					throw new Injexception("Method hook " + mixinMethod.getPoolMethod() + " doesn't have void return type");
@@ -64,18 +60,8 @@ public class InjectHookMethod extends AbstractInjector
 
 				final ClassFile deobTarget = inject.toDeob(targetClass.getName());
 				final Signature deobSig = InjectUtil.apiToDeob(inject, mixinMethod.getDescriptor());
-
-				final Method targetMethod;
-				if (mixinMethod.isStatic())
-				{
-					targetMethod = InjectUtil.findMethodWithArgs(inject, hookName, deobTarget.getName(), deobSig); // , deobSig);
-				}
-				else
-				{
-					targetMethod = InjectUtil.findMethodWithArgsDeep(inject, deobTarget, hookName, deobSig);
-				}
-
-				assert mixinMethod.isStatic() == targetMethod.isStatic() : "Mixin method isn't static but deob has a static method named the same as the hook, and I was too lazy to do something about this bug";
+				final boolean notStatic = !mixinMethod.isStatic();
+				final Method targetMethod = InjectUtil.findMethod(inject, hookName, deobTarget.getName(), sig -> InjectUtil.argsMatch(sig, deobSig), notStatic, false);
 
 				final net.runelite.asm.pool.Method hookMethod = new net.runelite.asm.pool.Method(
 					targetClass.getPoolClass(),
@@ -94,32 +80,24 @@ public class InjectHookMethod extends AbstractInjector
 	private void inject(final Method method, final net.runelite.asm.pool.Method hookMethod, boolean end)
 	{
 		final Instructions ins = method.getCode().getInstructions();
+		final ListIterator<Instruction> it;
 
 		if (end)
 		{
-			final ListIterator<Instruction> it = ins.listIterator(ins.size() - 1);
+			it = ins.listIterator(ins.size());
 			while (it.hasPrevious())
-			{
 				if (it.previous() instanceof ReturnInstruction)
-				{
 					insertVoke(method, hookMethod, it);
-				}
-			}
 
 			return;
 		}
 
-		final ListIterator<Instruction> it = ins.listIterator();
-
+		it = ins.listIterator();
 		if (method.getName().equals("<init>"))
 		{
 			while (it.hasNext())
-			{
 				if (it.next() instanceof InvokeSpecial)
-				{
 					break;
-				}
-			}
 
 			assert it.hasNext() : "Constructor without invokespecial";
 		}
@@ -133,9 +111,7 @@ public class InjectHookMethod extends AbstractInjector
 		int varIdx = 0;
 
 		if (!method.isStatic())
-		{
 			iterator.add(new ALoad(instructions, varIdx++));
-		}
 
 		for (Type type : hookMethod.getType().getArguments())
 		{

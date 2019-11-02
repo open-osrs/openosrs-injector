@@ -21,9 +21,7 @@ public class RSApiClassVisitor extends ClassVisitor
 		apiClass.setClazz(new Class(name));
 
 		for (String s : interfaces)
-		{
 			apiClass.getInterfaces().add(new Class(s));
-		}
 	}
 
 	public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions)

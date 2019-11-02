@@ -30,9 +30,7 @@ public class RSApiClass implements Iterable<RSApiMethod>
 		for (RSApiMethod method : this)
 		{
 			if (method.isSynthetic())
-			{
 				continue;
-			}
 
 			final Annotations annotations = method.getAnnotations();
 			if (annotations.find(CONSTRUCT) != null)
@@ -70,9 +68,7 @@ public class RSApiClass implements Iterable<RSApiMethod>
 	{
 		List<RSApiMethod> imported = imports.get(str);
 		if (imported == null)
-		{
 			return;
-		}
 
 		to.addAll(imported);
 	}

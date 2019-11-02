@@ -1,11 +1,11 @@
 package com.openosrs.injector.injectors.raw;
 
+import com.openosrs.injector.InjectUtil;
 import com.openosrs.injector.Injexception;
 import com.openosrs.injector.injection.InjectData;
 import static com.openosrs.injector.injection.InjectData.HOOKS;
 import com.openosrs.injector.injectors.AbstractInjector;
 import java.util.ListIterator;
-import net.runelite.asm.ClassGroup;
 import net.runelite.asm.Method;
 import net.runelite.asm.attributes.code.Instruction;
 import net.runelite.asm.attributes.code.Instructions;
@@ -37,16 +37,9 @@ public class RenderDraw extends AbstractInjector
 		 * This class replaces entity draw invocation instructions
 		 * with the renderDraw method on drawcallbacks
 		 */
-		final ClassGroup deob = inject.getDeobfuscated();
-		final net.runelite.asm.pool.Method draw = inject.toVanilla(deob
-				.findClass("Entity")
-				.findMethod("draw")
-		).getPoolMethod();
+		final net.runelite.asm.pool.Method draw = InjectUtil.findMethod(inject, "draw", "Entity", null, true, false).getPoolMethod();
 
-		final Method drawTile = inject.toVanilla(deob
-			.findClass("Scene")
-			.findMethod("drawTile")
-		);
+		final Method drawTile = InjectUtil.findMethod(inject, "drawTile", "Scene", null, true, false);
 
 		Instructions ins = drawTile.getCode().getInstructions();
 		for (ListIterator<Instruction> iterator = ins.listIterator(); iterator.hasNext(); )

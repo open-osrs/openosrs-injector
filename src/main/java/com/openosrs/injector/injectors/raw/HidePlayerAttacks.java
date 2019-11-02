@@ -35,8 +35,15 @@ public class HidePlayerAttacks extends AbstractInjector
 		final Method addPlayerOptions = InjectUtil.findMethod(inject, "addPlayerToMenu");
 		final net.runelite.asm.pool.Method shouldHideAttackOptionFor = inject.getVanilla().findClass("client").findMethod("shouldHideAttackOptionFor").getPoolMethod();
 
-		injectHideAttack(addPlayerOptions, shouldHideAttackOptionFor);
-		injectHideCast(addPlayerOptions, shouldHideAttackOptionFor);
+		try
+		{
+			injectHideAttack(addPlayerOptions, shouldHideAttackOptionFor);
+			injectHideCast(addPlayerOptions, shouldHideAttackOptionFor);
+		}
+		catch (Injexception | AssertionError e)
+		{
+			log.warn("HidePlayerAttacks failed, but as this doesn't mess up anything other than that functionality, we're carrying on", e);
+		}
 	}
 
 	private void injectHideAttack(Method addPlayerOptions, net.runelite.asm.pool.Method shouldHideAttackOptionFor) throws Injexception
@@ -144,37 +151,68 @@ public class HidePlayerAttacks extends AbstractInjector
 		// <--- Inject comparison here (duh)
 		//
 		// add option n such
-
+		final Field flags = InjectUtil.findField(inject, "selectedSpellFlags", "Client").getPoolField();
 		Instructions ins = addPlayerOptions.getCode().getInstructions();
-		log.info(String.valueOf(ins.getInstructions().size()));
 		ListIterator<Instruction> iterator = ins.getInstructions().listIterator();
+		boolean b1, b2, iAnd, getstatic;
+		b1 = b2 = iAnd = getstatic = false;
 		while (iterator.hasNext())
 		{
 			Instruction i = iterator.next();
-			if (!(i instanceof BiPush) || (byte) ((BiPush) i).getConstant() != 8)
+
+			if (i instanceof Label)
+			{
+				b1 = b2 = iAnd = getstatic = false;
+				continue;
+			}
+
+			if ((i instanceof BiPush) && (byte) ((BiPush) i).getConstant() == 8)
+			{
+				if (!b1)
+					b1 = true;
+				else if (!b2)
+					b2 = true;
+				else throw new Injexception("3 bipushes? fucking mental, Hide spells failed btw");
+
+				continue;
+			}
+
+			if (i instanceof IAnd)
+			{
+				iAnd = true;
+				continue;
+			}
+
+			if (i instanceof GetStatic && ((GetStatic) i).getField().equals(flags))
+			{
+				getstatic = true;
+				continue;
+			}
+
+
+			if (!(i instanceof JumpingInstruction))
+			{
+				if (b1 && b2 && iAnd && getstatic)
+				{
+					throw new Injexception("@ me in discord if this shit is broken lol, hide spells failed btw");
+				}
+				continue;
+			}
+
+			if (!(b1 && b2 && iAnd && getstatic))
 			{
 				continue;
 			}
 
-			i = iterator.next();
-			while (!(i instanceof BiPush) || (byte) ((BiPush) i).getConstant() != 8)
+			Label target;
+			if (i instanceof IfICmpNe)
 			{
-				i = iterator.next();
+				target = ((IfICmpNe) i).getJumps().get(0);
 			}
-
-			i = iterator.next();
-			if (!(i instanceof IAnd))
+			else
 			{
-				throw new Injexception("Yikes I didn't expect this");
+				throw new Injexception("@ me in discord if this shit is broken lol, hide spells failed btw");
 			}
-
-			i = iterator.next();
-			if (!(i instanceof IfICmpNe))
-			{
-				continue;
-			}
-
-			Label target = ((IfICmpNe) i).getJumps().get(0);
 
 			// Load the player
 			ALoad i1 = new ALoad(ins, 0);

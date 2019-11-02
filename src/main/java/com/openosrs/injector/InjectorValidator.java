@@ -31,9 +31,7 @@ public class InjectorValidator implements Validator
 			for (Class intf : cf.getInterfaces())
 			{
 				if (!intf.getName().startsWith(API_BASE))
-				{
 					continue;
-				}
 
 				RSApiClass apiC = rsApi.findClass(intf.getName());
 				if (apiC == null)
@@ -59,9 +57,7 @@ public class InjectorValidator implements Validator
 		for (RSApiMethod apiMethod : apiClass)
 		{
 			if (apiMethod.isSynthetic() || apiMethod.isDefault())
-			{
 				continue;
-			}
 
 			if (clazz.findMethodDeep(apiMethod.getName(), apiMethod.getSignature()) == null)
 			{

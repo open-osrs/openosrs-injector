@@ -40,34 +40,34 @@ public class DrawAfterWidgets extends AbstractInjector
 		 * Revision 180 - client.gs():
 		 * ______________________________________________________
 
-		 * 	@Export("drawLoggedIn")
-		 * 	final void drawLoggedIn() {
-		 * 		if(rootInterface != -1) {
-		 * 			ClientPreferences.method1809(rootInterface);
-		 * 		}
+		 * @Export("drawLoggedIn")
+		 * final void drawLoggedIn() {
+		 *    if(rootInterface != -1) {
+		 *       ClientPreferences.method1809(rootInterface);
+		 *    }
 
-		 * 		int var1;
-		 * 		for(var1 = 0; var1 < rootWidgetCount; ++var1) {
-		 * 			if(__client_od[var1]) {
-		 * 				__client_ot[var1] = true;
-		 * 			}
+		 *    int var1;
+		 *    for(var1 = 0; var1 < rootWidgetCount; ++var1) {
+		 *       if(__client_od[var1]) {
+		 *          __client_ot[var1] = true;
+		 *       }
 
-		 * 			__client_oq[var1] = __client_od[var1];
-		 * 			__client_od[var1] = false;
-		 * 		}
+		 *       __client_oq[var1] = __client_od[var1];
+		 *       __client_od[var1] = false;
+		 *    }
 
-		 * 		__client_oo = cycle;
-		 * 		__client_lq = -1;
-		 * 		__client_ln = -1;
-		 * 		UserComparator6.__fg_jh = null;
-		 * 		if(rootInterface != -1) {
-		 * 			rootWidgetCount = 0;
-		 * 			Interpreter.method1977(rootInterface, 0, 0, SoundCache.canvasWidth, Huffman.canvasHeight, 0, 0, -1);
-		 * 		}
+		 *    __client_oo = cycle;
+		 *    __client_lq = -1;
+		 *    __client_ln = -1;
+		 *    UserComparator6.__fg_jh = null;
+		 *    if(rootInterface != -1) {
+		 *       rootWidgetCount = 0;
+		 *       Interpreter.drawWidgets(rootInterface, 0, 0, SoundCache.canvasWidth, Huffman.canvasHeight, 0, 0, -1);
+		 *    }
 
-		 * 	< --  here appearantly
+		 *    <--  here
 
-		 * 		Rasterizer2D.Rasterizer2D_resetClip();
+		 * Rasterizer2D.Rasterizer2D_resetClip();
 		 * ______________________________________________________
 		 */
 
@@ -132,7 +132,7 @@ public class DrawAfterWidgets extends AbstractInjector
 				{
 					// If we get here, we're either in the wrong method
 					// or Jagex has removed the "if (535573958 * kl != -1)"
-						log.debug("Could not find the label for jumping to the " + noClip + " call in " + m);
+					//	log.debug("Could not find the label for jumping to the " + noClip + " call in " + m);
 					continue;
 				}
 
