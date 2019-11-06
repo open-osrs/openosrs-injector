@@ -16,6 +16,7 @@ import com.openosrs.injector.injectors.MixinInjector;
 import com.openosrs.injector.injectors.RSApiInjector;
 import com.openosrs.injector.injectors.raw.ClearColorBuffer;
 import com.openosrs.injector.injectors.raw.DrawAfterWidgets;
+import com.openosrs.injector.injectors.raw.DrawMenu;
 import com.openosrs.injector.injectors.raw.HidePlayerAttacks;
 import com.openosrs.injector.injectors.raw.Occluder;
 import com.openosrs.injector.injectors.raw.RasterizerAlpha;
@@ -72,7 +73,7 @@ public class Injection extends InjectData implements InjectTaskHandler
 
 		inject(new Occluder(this));
 
-		// inject(new DrawMenu(this));
+		inject(new DrawMenu(this));
 
 		inject(new HidePlayerAttacks(this));
 

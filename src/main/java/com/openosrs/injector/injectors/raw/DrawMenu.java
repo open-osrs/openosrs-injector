@@ -5,198 +5,127 @@
  * This code is licensed under GPL3, see the complete license in
  * the LICENSE file in the root directory of this source tree.
  */
-//package com.openosrs.injector.injectors.raw;
+package com.openosrs.injector.injectors.raw;
 
-//import com.openosrs.injector.InjectUtil;
-//import com.openosrs.injector.Injexception;
-//import com.openosrs.injector.injection.InjectData;
-//import static com.openosrs.injector.injection.InjectData.HOOKS;
-//import com.openosrs.injector.injectors.AbstractInjector;
-//import java.util.List;
-//import java.util.ListIterator;
-//import net.runelite.asm.ClassFile;
-//import net.runelite.asm.ClassGroup;
-//import net.runelite.asm.Method;
-//import net.runelite.asm.Type;
-//import net.runelite.asm.attributes.code.Instruction;
-//import net.runelite.asm.attributes.code.Instructions;
-//import net.runelite.asm.attributes.code.Label;
-//import net.runelite.asm.attributes.code.instruction.types.JumpingInstruction;
-//import net.runelite.asm.attributes.code.instruction.types.PushConstantInstruction;
-//import net.runelite.asm.attributes.code.instructions.GetStatic;
-//import net.runelite.asm.attributes.code.instructions.IStore;
-//import net.runelite.asm.attributes.code.instructions.IfEq;
-//import net.runelite.asm.attributes.code.instructions.IfNe;
-//import net.runelite.asm.attributes.code.instructions.InvokeStatic;
-//import net.runelite.asm.execution.Execution;
-//import net.runelite.asm.execution.InstructionContext;
-//import net.runelite.asm.pool.Class;
-//import net.runelite.asm.pool.Field;
-//import net.runelite.asm.signature.Signature;
+import com.openosrs.injector.InjectUtil;
+import com.openosrs.injector.Injexception;
+import com.openosrs.injector.injection.InjectData;
+import static com.openosrs.injector.injection.InjectData.HOOKS;
+import com.openosrs.injector.injectors.AbstractInjector;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
+import net.runelite.asm.Method;
+import net.runelite.asm.attributes.code.Instruction;
+import net.runelite.asm.attributes.code.Instructions;
+import net.runelite.asm.attributes.code.Label;
+import net.runelite.asm.attributes.code.instructions.GetStatic;
+import net.runelite.asm.attributes.code.instructions.IfEq;
+import net.runelite.asm.attributes.code.instructions.IfNe;
+import net.runelite.asm.attributes.code.instructions.InvokeStatic;
+import net.runelite.asm.execution.Execution;
+import net.runelite.asm.execution.InstructionContext;
+import net.runelite.asm.execution.MethodContext;
+import net.runelite.asm.pool.Class;
+import net.runelite.asm.pool.Field;
+import net.runelite.asm.signature.Signature;
 
-//public class DrawMenu extends AbstractInjector
-//{
-	//private static final net.runelite.asm.pool.Method HOOK = new net.runelite.asm.pool.Method(
-		//new Class(HOOKS),
-		//"drawMenu",
-		//new Signature("()Z")
-	//);
-	//private static final int MENU_COLOR = 0x5d5447;
+public class DrawMenu extends AbstractInjector
+{
+	private static final net.runelite.asm.pool.Method DRAWMENU = new net.runelite.asm.pool.Method(
+		new Class(HOOKS),
+		"drawMenu",
+		new Signature("()Z")
+	);
 
-	//public DrawMenu(InjectData inject)
-	//{
-		//super(inject);
-	//}
+	public DrawMenu(InjectData inject)
+	{
+		super(inject);
+	}
 
-	//public void inject() throws Injexception
-	//{
-		///*
-		 //* Label Getstatic client.isMenuOpen
-		 //* Ifne -> Label Drawmenu
-		 //* Jump -> Label Drawtext
-		 //*
-		 //* Label drawtext
-		 //* Ldc xxx
-		 //* Getstatic client. something with viewport size?
-		 //* Imul
-		 //* Iconst_m1
-		 //* Ifne -> Label after draw menu <- info we need
-		 //* Getstatic / LDC (same getstatic and LDC before)
-		 //* Getstatic / LDC
-		 //*/
-		//final ClassFile deobClient = inject.getDeobfuscated().findClass("Client");
-		//final ClassGroup vanilla = inject.getVanilla();
+	public void inject() throws Injexception
+	{
+		/*
+		 * The drawMenu method can be inlined, so we need this raw injector to find where to inject.
+		 *
+		 * Originally I wanted to make sure we don't skip the method where client gets told not to draw
+		 * the widgets behind the menu. This would be useless though, as the client redraws the widgets
+		 * no matter what. It would also be such a insignificant performance boost it doesn't seem worth
+		 * the extra headache to me.
+		 *
+		 * --- what the code looks like completely uninlined ---
+		 * if (!isMenuOpen) {
+		 *    if (viewportX != -1) {
+		 *       drawTopLeftText(viewportX, viewportY);
+		 *    }
+		 * } else {
+		 *    drawMenu();
+		 * }
+		 *
+		 * if (gameDrawingMode == 3) {
+		 *    ...
+		 * --------
+		 */
 
-		//final Field isMenuOpen = inject.toVanilla(deobClient.findField("isMenuOpen")).getPoolField();
-		//final Method drawLoggedIn = inject.toVanilla(deobClient.findMethod("drawLoggedIn"));
+		final Method drawLoggedIn = InjectUtil.findMethod(inject, "drawLoggedIn", "Client", null, true, false);
+		final Field gameDrawMode = InjectUtil.findField(inject, "gameDrawingMode", "Client").getPoolField();
+		final Field isMenuOpen = InjectUtil.findField(inject, "isMenuOpen", "Client").getPoolField();
 
-		//final Instructions inst = drawLoggedIn.getCode().getInstructions();
+		final Execution execution = new Execution(inject.getVanilla());
+		execution.noInvoke = true;
+		execution.addMethod(drawLoggedIn);
 
-		//boolean foundCol = false, foundEnd = false;
-		//int injIdx = -1;
-		//final ListIterator<Instruction> it = inst.listIterator();
-		//while (it.hasNext())
-		//{
-			//Instruction i = it.next();
-			//if (!foundCol &&
-				//(i instanceof PushConstantInstruction) &&
-				//((PushConstantInstruction) i).getConstant().equals(MENU_COLOR))
-			//{
-				//foundCol = true;
-				//injIdx = it.nextIndex();
-			//}
-			//else if (!foundEnd &&
-				//(i instanceof PushConstantInstruction) &&
-				//((PushConstantInstruction) i).getConstant().equals(0))
-			//{
-				//i = it.next();
-				//if (!(i instanceof IStore))
-				//{
-					//continue;
-				//}
+		AtomicReference<MethodContext> mcRef = new AtomicReference<>(null);
 
-				//int varIdx = ((IStore) i).getVariableIndex();
-				//i = it.next();
+		execution.addMethodContextVisitor(mcRef::set);
+		execution.run();
 
-				//if (!(i instanceof JumpingInstruction))
-				//{
-					//continue;
-				//}
+		Instruction injectInvokeAfter = null;
+		Label labelToJumpTo = null;
 
-				//List<Label> jumps = ((JumpingInstruction) i).getJumps();
-				//if (jumps.size() > 1)
-				//{
-					//continue;
-				//}
-				//
-				//Instruction afterLabel = inst.
-			//}
-		//}
+		MethodContext mc = mcRef.get();
+		for (InstructionContext ic : mc.getInstructionContexts())
+		{
+			Instruction instruction = ic.getInstruction();
+			if (!(instruction instanceof GetStatic))
+				continue;
 
+			if (((GetStatic) instruction).getField().equals(isMenuOpen))
+			{
+				InstructionContext isMenuOpenPopper = ic.getPushes().get(0).getPopped().get(0);
+				Instruction isMenuOpenPopI = isMenuOpenPopper.getInstruction();
 
-		//final Execution ex = new Execution(vanilla);
-		//// Static step makes static methods not count as methods
-		//ex.staticStep = true;
-		//ex.noExceptions = true;
-		//ex.addMethod(drawLoggedIn);
+				// Unless there's a isMenuOpen in drawLoggedIn I missed (or something new got inlined (and I missed that)) this should never happen
+				assert isMenuOpenPopI instanceof IfEq || isMenuOpenPopI instanceof IfNe : "isMenuOpen was popped by a " + isMenuOpenPopI + "?";
 
-		//final Instruction
-		//ex.addExecutionVisitor((InstructionContext ic) ->
-		//{
-			//Instruction i = ic.getInstruction();
-			//if (i instanceof PushConstantInstruction)
-			//{
-				//if (((PushConstantInstruction) i).getConstant().equals(MENU_COLOR))
-				//{
-					//injIdx
-				//}
-			//}
-		//});
-		//ex.run();
+				// If the popper is a IfNe the label it's pointing to is the drawMenu one and topLeft is directly after it
+				// else it's the other way around, obviously
+				if (isMenuOpenPopI instanceof IfNe)
+					injectInvokeAfter = ((IfNe) isMenuOpenPopI).getTo();
+				else
+					injectInvokeAfter = isMenuOpenPopI;
+			}
+			else if (((GetStatic) instruction).getField().equals(gameDrawMode))
+			{
+				List<Instruction> instrL = instruction.getInstructions().getInstructions();
+				for (int i = instrL.indexOf(instruction); !(instruction instanceof Label); i--)
+					instruction = instrL.get(i);
 
-		//final Instructions ins = drawLoggedIn.getCode().getInstructions();
-		//ListIterator<Instruction> it = ins.getInstructions().listIterator();
-		//int injectIndex = -1;
-		//Label after = null;
-		//boolean foundBefore = false;
-		//boolean foundAfter = false;
+				labelToJumpTo = (Label) instruction;
+			}
 
-		//while (it.hasNext())
-		//{
-			//Instruction i = it.next();
+			if (injectInvokeAfter != null && labelToJumpTo != null)
+				break;
+		}
 
-			//if (!(i instanceof GetStatic) && !(i instanceof InvokeStatic))
-			//{
-				//continue;
-			//}
+		if (injectInvokeAfter == null || labelToJumpTo == null)
+			throw new Injexception("Couldn't find the right location for DrawMenu to inject");
 
-			//if (!foundBefore && i instanceof GetStatic)
-			//{
-				//if (!((GetStatic) i).getField().equals(isMenuOpen))
-				//{
-					//continue;
-				//}
+		final Instructions instrs = mc.getMethod().getCode().getInstructions();
+		int idx = instrs.getInstructions().indexOf(injectInvokeAfter);
 
-				//i = it.next();
-				//if (!(i instanceof IfEq) && !(i instanceof IfNe))
-				//{
-					//continue;
-				//}
+		instrs.addInstruction(++idx, new InvokeStatic(instrs, DRAWMENU));
+		instrs.addInstruction(++idx, new IfNe(instrs, labelToJumpTo));
 
-				//if (i instanceof IfEq)
-				//{
-					//injectIndex = it.nextIndex();
-				//}
-				//else
-				//{
-					//injectIndex = ins.getInstructions().indexOf(((IfNe) i).getJumps().get(0)) + 1;
-				//}
-				//foundBefore = true;
-			//}
-			//else if (!foundAfter && i instanceof InvokeStatic
-				//&& ((InvokeStatic) i).getMethod().equals("topLeftText"))
-			//{
-				//i = it.next();
-				//assert i instanceof JumpingInstruction;
-				//after = ((JumpingInstruction) i).getJumps().get(0);
-				//foundAfter = true;
-			//}
-
-			//if (foundBefore && foundAfter)
-			//{
-				//break;
-			//}
-		//}
-
-		//if (!foundBefore || !foundAfter || injectIndex == -1)
-		//{
-
-		//}
-
-		//ins.addInstruction(injectIndex, new IfNe(ins, after));
-		//ins.addInstruction(injectIndex, new InvokeStatic(ins, HOOK));
-		//log.info("Injected drawmenu hook in {} at index {}", "", injectIndex);
-
-
-	//}
-//}
+		log.info("DrawMenu injected a method call at index {} in method {}. With a comparison jumping to {}", idx, drawLoggedIn, labelToJumpTo);
+	}
+}
