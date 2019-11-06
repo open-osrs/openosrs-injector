@@ -265,9 +265,14 @@ public interface InjectUtil
 		throw new Injexception("Field " + name + " doesn't exist");
 	}
 
-	static ClassFile fromApiMethod(InjectData data, RSApiMethod apiMethod)
+	static ClassFile deobFromApiMethod(InjectData data, RSApiMethod apiMethod)
 	{
-		return data.toVanilla(data.toDeob(apiMethod.getClazz().getName()));
+		return data.toDeob(apiMethod.getClazz().getName());
+	}
+
+	static ClassFile vanillaFromApiMethod(InjectData data, RSApiMethod apiMethod)
+	{
+		return data.toVanilla(deobFromApiMethod(data, apiMethod));
 	}
 
 	static Signature apiToDeob(InjectData data, Signature api)

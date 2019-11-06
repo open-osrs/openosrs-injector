@@ -70,7 +70,7 @@ public class RSApiInjector extends AbstractInjector
 			final RSApiClass implementingClass = inject.getRsApi().findClass(API_BASE + deobClass.getName());
 
 			injectFields(deobClass, implementingClass);
-			injectMethods(deobClass, implementingClass); // aka invokers
+			injectMethods(deobClass, implementingClass);
 		}
 
 		retryFailures();
@@ -99,6 +99,20 @@ public class RSApiInjector extends AbstractInjector
 				{
 					it.remove();
 					continue;
+				}
+
+				// Check if there's a field with the same exported name on the api target class itself,
+				// as that should come before random static fields.
+				if (deobField.isStatic())
+				{
+					ClassFile deobApiTarget = InjectUtil.deobFromApiMethod(inject, apiMethod);
+
+					if (deobApiTarget != deobClass &&
+						deobApiTarget.findField(deobField.getName()) != null)
+					{
+						it.remove();
+						continue;
+					}
 				}
 
 				final Signature sig = apiMethod.getSignature();
@@ -161,6 +175,21 @@ public class RSApiInjector extends AbstractInjector
 			while (it.hasNext())
 			{
 				final RSApiMethod apiMethod = it.next();
+
+				// Check if there's a method with the same exported name on the api target class itself,
+				// as that should come before random static methods.
+				if (deobMethod.isStatic())
+				{
+					ClassFile deobApiTarget = InjectUtil.deobFromApiMethod(inject, apiMethod);
+
+					if (deobApiTarget != deobClass &&
+						deobApiTarget.findMethod(deobMethod.getName()) != null)
+					{
+						it.remove();
+						continue;
+					}
+				}
+
 				final Signature apiSig = apiMethod.getSignature();
 
 				if (apiMethod.isInjected()
@@ -174,7 +203,7 @@ public class RSApiInjector extends AbstractInjector
 			{
 				final RSApiMethod apiMethod = matching.get(0);
 
-				final ClassFile targetClass = InjectUtil.fromApiMethod(inject, apiMethod);
+				final ClassFile targetClass = InjectUtil.vanillaFromApiMethod(inject, apiMethod);
 				final Method vanillaMethod = inject.toVanilla(deobMethod);
 				final String garbage = DeobAnnotations.getDecoder(deobMethod);
 				log.debug("Injecting invoker {} for {} into {}", apiMethod.getMethod(), vanillaMethod.getPoolMethod(), targetClass.getPoolClass());
@@ -233,7 +262,7 @@ public class RSApiInjector extends AbstractInjector
 	{
 		for (RSApiMethod apiMethod : matched)
 		{
-			final ClassFile targetClass = InjectUtil.fromApiMethod(inject, apiMethod);
+			final ClassFile targetClass = InjectUtil.vanillaFromApiMethod(inject, apiMethod);
 			apiMethod.setInjected(true);
 
 			if (apiMethod.getSignature().isVoid())
