@@ -14,7 +14,7 @@ plugins {
 }
 
 group = "com.openosrs"
-version = "1.0.2.1"
+version = "1.0.2.2"
 
 repositories {
     mavenCentral()
@@ -32,6 +32,8 @@ dependencies {
     implementation(kotlin("stdlib-jdk8"))
     implementation("com.openosrs:deobfuscator:1.5.39-SNAPSHOT") {
         exclude("org.slf4j", "slf4j-simple")
+        exclude("com.openosrs.rs", "runescape-api")
+        exclude("com.openosrs", "runelite-api")
     }
     implementation("com.google.guava:guava:28.1-jre")
     implementation("org.ow2.asm:asm:7.2")
@@ -64,4 +66,15 @@ compileKotlin.kotlinOptions {
 val compileTestKotlin: KotlinCompile by tasks
 compileTestKotlin.kotlinOptions {
     jvmTarget = "1.8"
+}
+
+publishing {
+    repositories {
+        mavenLocal()
+    }
+    publications {
+        register("asd", MavenPublication::class) {
+            from(components["java"])
+        }
+    }
 }
