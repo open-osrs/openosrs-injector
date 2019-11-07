@@ -13,6 +13,7 @@ import static com.openosrs.injector.rsapi.RSApi.API_BASE;
 import com.openosrs.injector.rsapi.RSApiClass;
 import com.openosrs.injector.rsapi.RSApiMethod;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import net.runelite.asm.Annotated;
@@ -30,14 +31,18 @@ import net.runelite.asm.attributes.code.instructions.ALoad;
 import net.runelite.asm.attributes.code.instructions.DLoad;
 import net.runelite.asm.attributes.code.instructions.FLoad;
 import net.runelite.asm.attributes.code.instructions.ILoad;
+import net.runelite.asm.attributes.code.instructions.IMul;
 import net.runelite.asm.attributes.code.instructions.InvokeStatic;
 import net.runelite.asm.attributes.code.instructions.InvokeVirtual;
+import net.runelite.asm.attributes.code.instructions.LDC;
 import net.runelite.asm.attributes.code.instructions.LLoad;
+import net.runelite.asm.attributes.code.instructions.LMul;
 import net.runelite.asm.attributes.code.instructions.Return;
 import net.runelite.asm.attributes.code.instructions.VReturn;
 import net.runelite.asm.pool.Class;
 import net.runelite.asm.signature.Signature;
 import net.runelite.deob.DeobAnnotations;
+import net.runelite.deob.deobfuscators.arithmetic.DMath;
 import org.jetbrains.annotations.Nullable;
 
 public interface InjectUtil
@@ -208,7 +213,7 @@ public interface InjectUtil
 				field = clazz.findField(name, type);
 
 			if (field != null)
-				return data.toVanilla(field);
+				return field;
 		}
 
 		for (ClassFile clazz : deob)
@@ -219,7 +224,7 @@ public interface InjectUtil
 				field = clazz.findField(name, type);
 
 			if (field != null)
-				return data.toVanilla(field);
+				return field;
 		}
 
 		throw new Injexception(String.format("Static field %s doesn't exist", (type != null ? type + " " : "") + name));
@@ -449,5 +454,28 @@ public interface InjectUtil
 		Object v = annotation.getElement().getValue();
 		String str = ((org.objectweb.asm.Type) v).getInternalName();
 		return data.toVanilla(data.toDeob(str));
+	}
+
+	/**
+	 * Add after the get
+	 */
+	static void injectObfuscatedGetter(Number getter, Instructions instrs, Consumer<Instruction> into)
+	{
+		into.accept(new LDC(instrs, getter));
+
+		if (getter instanceof Integer)
+			into.accept(new IMul(instrs));
+		else if (getter instanceof Long)
+			into.accept(new LMul(instrs));
+	}
+
+	/**
+	 * Add IN FRONT of the put
+	 *
+	 * @param getter should be the same value as for the getter (straight from ObfuscatedGetter)
+	 */
+	static void injectObfuscatedSetter(Number getter, Instructions instrs, Consumer<Instruction> into)
+	{
+		injectObfuscatedGetter(DMath.modInverse(getter), instrs, into);
 	}
 }

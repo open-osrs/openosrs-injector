@@ -32,6 +32,7 @@ import java.io.InputStream;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import javax.inject.Provider;
 import net.runelite.api.mixins.Copy;
@@ -42,12 +43,15 @@ import net.runelite.asm.ClassGroup;
 import net.runelite.asm.Field;
 import net.runelite.asm.Method;
 import static net.runelite.asm.Type.INT;
+import net.runelite.asm.attributes.code.Instruction;
 import net.runelite.asm.attributes.code.instructions.GetStatic;
+import net.runelite.asm.attributes.code.instructions.IMul;
 import net.runelite.asm.attributes.code.instructions.InvokeVirtual;
 import net.runelite.asm.attributes.code.instructions.LDC;
 import net.runelite.asm.signature.Signature;
 import net.runelite.asm.visitors.ClassFileVisitor;
 import net.runelite.deob.util.JarUtil;
+import net.runelite.mapping.ObfuscatedGetter;
 import net.runelite.mapping.ObfuscatedName;
 import net.runelite.mapping.ObfuscatedSignature;
 import static org.junit.Assert.assertEquals;
@@ -61,7 +65,8 @@ import static org.objectweb.asm.Opcodes.ACC_STATIC;
 class DeobTarget
 {
 	@ObfuscatedName("ob_foo4")
-	private static int foo4;
+	@ObfuscatedGetter(intValue = 1157381415)
+	static int foo4;
 
 	@ObfuscatedName("ob_foo3")
 	@ObfuscatedSignature(
@@ -77,7 +82,7 @@ class DeobTarget
 
 class VanillaTarget
 {
-	private static int ob_foo4;
+	static int ob_foo4;
 
 	private void ob_foo3(int garbageValue)
 	{
@@ -208,6 +213,8 @@ public class MixinInjectorTest
 				return true;
 			})
 			.count(), 1);
+
+		assert getStaticHasGetter(ob_foo3, "ob_foo4");
 		// Check that the "foo3()" call in the new code body was mapped to the copy
 		assertEquals(ob_foo3
 			.getCode()
@@ -270,6 +277,20 @@ public class MixinInjectorTest
 				return true;
 			})
 			.count(), 1);
+	}
+
+	private boolean getStaticHasGetter(Method ob_foo3, String gottenField)
+	{
+		ListIterator<Instruction> it = ob_foo3.getCode().getInstructions().listIterator();
+		Instruction i;
+		while (it.hasNext() &&
+			!((i = it.next()) instanceof GetStatic &&
+			((GetStatic) i).getField().getName().equals(gottenField)));
+
+		return
+			(i = it.next()) instanceof LDC &&
+			((LDC) i).getConstantAsInt() == 1157381415 &&
+			it.next() instanceof IMul;
 	}
 
 	private static ClassFile loadClass(Class<?> clazz)

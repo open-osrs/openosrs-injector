@@ -43,8 +43,6 @@ import net.runelite.asm.attributes.code.Instruction;
 import net.runelite.asm.attributes.code.Instructions;
 import net.runelite.asm.attributes.code.instructions.ALoad;
 import net.runelite.asm.attributes.code.instructions.CheckCast;
-import net.runelite.asm.attributes.code.instructions.IMul;
-import net.runelite.asm.attributes.code.instructions.LDC;
 import net.runelite.asm.attributes.code.instructions.PutField;
 import net.runelite.asm.attributes.code.instructions.PutStatic;
 import net.runelite.asm.attributes.code.instructions.VReturn;
@@ -52,12 +50,10 @@ import net.runelite.asm.signature.Signature;
 
 public class InjectSetter
 {
-	public static void inject(ClassFile targetClass, RSApiMethod apiMethod, Field field, Number setter) throws Injexception
+	public static void inject(ClassFile targetClass, RSApiMethod apiMethod, Field field, Number getter) throws Injexception
 	{
 		if (targetClass.findMethod(apiMethod.getName(), apiMethod.getSignature()) != null)
-		{
 			throw new Injexception("Duplicate setter method " + apiMethod.getMethod().toString());
-		}
 
 		final String name = apiMethod.getName();
 		final Signature sig = apiMethod.getSignature();
@@ -73,9 +69,7 @@ public class InjectSetter
 
 		// load this
 		if (!field.isStatic())
-		{
 			ins.add(new ALoad(instructions, 0));
-		}
 
 		// load argument
 		final Type argumentType = sig.getTypeOfArg(0);
@@ -90,25 +84,13 @@ public class InjectSetter
 			ins.add(checkCast);
 		}
 
-		if (setter instanceof Integer)
-		{
-			ins.add(new LDC(instructions, setter));
-			ins.add(new IMul(instructions));
-		}
-		else if (setter instanceof Long)
-		{
-			ins.add(new LDC(instructions, setter));
-			ins.add(new IMul(instructions));
-		}
+		if (getter != null)
+			InjectUtil.injectObfuscatedSetter(getter, instructions, ins::add);
 
 		if (field.isStatic())
-		{
 			ins.add(new PutStatic(instructions, field));
-		}
 		else
-		{
 			ins.add(new PutField(instructions, field));
-		}
 
 		ins.add(new VReturn(instructions));
 

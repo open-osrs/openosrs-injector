@@ -53,10 +53,12 @@ import net.runelite.asm.attributes.annotation.ArrayElement;
 import net.runelite.asm.attributes.code.Instruction;
 import net.runelite.asm.attributes.code.Instructions;
 import net.runelite.asm.attributes.code.instruction.types.FieldInstruction;
+import net.runelite.asm.attributes.code.instruction.types.GetFieldInstruction;
 import net.runelite.asm.attributes.code.instruction.types.InvokeInstruction;
 import net.runelite.asm.attributes.code.instruction.types.LVTInstruction;
 import net.runelite.asm.attributes.code.instruction.types.PushConstantInstruction;
 import net.runelite.asm.attributes.code.instruction.types.ReturnInstruction;
+import net.runelite.asm.attributes.code.instruction.types.SetFieldInstruction;
 import net.runelite.asm.attributes.code.instructions.ALoad;
 import net.runelite.asm.attributes.code.instructions.ANewArray;
 import net.runelite.asm.attributes.code.instructions.CheckCast;
@@ -68,7 +70,10 @@ import net.runelite.asm.attributes.code.instructions.InvokeStatic;
 import net.runelite.asm.attributes.code.instructions.Pop;
 import net.runelite.asm.attributes.code.instructions.PutField;
 import net.runelite.asm.signature.Signature;
+import net.runelite.deob.DeobAnnotations;
 import net.runelite.deob.util.JarUtil;
+import org.jetbrains.annotations.Nullable;
+import org.objectweb.asm.Opcodes;
 
 public class MixinInjector extends AbstractInjector
 {
@@ -82,7 +87,7 @@ public class MixinInjector extends AbstractInjector
 	private static final String MIXIN_BASE = "net/runelite/mixins/";
 
 	private final Map<String, Field> injectedFields = new HashMap<>();
-	private final Map<net.runelite.asm.pool.Field, Field> shadowFields = new HashMap<>();
+	private final Map<net.runelite.asm.pool.Field, ShadowField> shadowFields = new HashMap<>();
 	private int copied = 0, replaced = 0, injected = 0;
 
 	public MixinInjector(InjectData inject)
@@ -230,11 +235,23 @@ public class MixinInjector extends AbstractInjector
 			String shadowed = shadow.getElement().getString();
 
 			Field targetField = injectedFields.get(shadowed);
+			Number getter = null;
 
 			if (targetField == null)
-				targetField = InjectUtil.findStaticField(inject, shadowed, null, InjectUtil.apiToDeob(inject, field.getType()));
+			{
+				final Field deobTargetField = InjectUtil.findStaticField(inject, shadowed, null, InjectUtil.apiToDeob(inject, field.getType()));
+				targetField = inject.toVanilla(deobTargetField);
 
-			shadowFields.put(field.getPoolField(), targetField);
+				getter = DeobAnnotations.getObfuscatedGetter(deobTargetField);
+			}
+
+			if ((targetField.getAccessFlags() & Opcodes.ACC_PRIVATE) != 0)
+				throw new Injexception("Shadowed fields can't be private");
+
+			shadowFields.put(
+				field.getPoolField(),
+				new ShadowField(targetField, getter)
+			);
 		}
 	}
 
@@ -569,9 +586,25 @@ public class MixinInjector extends AbstractInjector
 			{
 				FieldInstruction fi = (FieldInstruction) i;
 
-				Field shadowed = shadowFields.get(fi.getField());
-				if (shadowed != null)
+				ShadowField shadowField = shadowFields.get(fi.getField());
+
+				if (shadowField != null)
 				{
+					Field shadowed = shadowField.targetField;
+					if (shadowField.obfuscatedGetter != null)
+					{
+						if (i instanceof SetFieldInstruction)
+						{
+							iterator.previous();
+							InjectUtil.injectObfuscatedSetter(shadowField.obfuscatedGetter, i.getInstructions(), iterator::add);
+							iterator.next();
+						}
+						else if (i instanceof GetFieldInstruction)
+						{
+							InjectUtil.injectObfuscatedGetter(shadowField.obfuscatedGetter, i.getInstructions(), iterator::add);
+						}
+					}
+
 					fi.setField(shadowed.getPoolField());
 				}
 				else if (fi.getField().getClazz().getName().equals(mixinCf.getName()))
@@ -669,5 +702,14 @@ public class MixinInjector extends AbstractInjector
 	{
 		private Method obMethod;
 		private boolean hasGarbageValue;
+	}
+
+	@AllArgsConstructor
+	private static class ShadowField
+	{
+		private Field targetField;
+
+		@Nullable
+		private Number obfuscatedGetter;
 	}
 }

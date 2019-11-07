@@ -51,7 +51,6 @@ import net.runelite.asm.Method;
 import net.runelite.asm.Type;
 import net.runelite.asm.signature.Signature;
 import net.runelite.deob.DeobAnnotations;
-import net.runelite.deob.deobfuscators.arithmetic.DMath;
 
 public class RSApiInjector extends AbstractInjector
 {
@@ -273,7 +272,7 @@ public class RSApiInjector extends AbstractInjector
 					targetClass,
 					apiMethod,
 					targetField,
-					modInverseOrNull(getter)
+					getter
 				);
 			}
 			else
@@ -288,14 +287,5 @@ public class RSApiInjector extends AbstractInjector
 				);
 			}
 		}
-	}
-
-	private static Number modInverseOrNull(Number getter)
-	{
-		if (getter == null)
-			return null;
-
-		// inverse getter to get the setter
-		return DMath.modInverse(getter);
 	}
 }

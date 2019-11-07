@@ -43,9 +43,6 @@ import net.runelite.asm.attributes.code.Instructions;
 import net.runelite.asm.attributes.code.instructions.ALoad;
 import net.runelite.asm.attributes.code.instructions.GetField;
 import net.runelite.asm.attributes.code.instructions.GetStatic;
-import net.runelite.asm.attributes.code.instructions.IMul;
-import net.runelite.asm.attributes.code.instructions.LDC;
-import net.runelite.asm.attributes.code.instructions.LMul;
 import net.runelite.asm.signature.Signature;
 
 public class InjectGetter
@@ -53,9 +50,7 @@ public class InjectGetter
 	public static void inject(ClassFile targetClass, RSApiMethod apiMethod, Field field, Number getter) throws Injexception
 	{
 		if (targetClass.findMethod(apiMethod.getName(), apiMethod.getSignature()) != null)
-		{
 			throw new Injexception("Duplicate getter method " + apiMethod.getMethod().toString());
-		}
 
 		final String name = apiMethod.getName();
 		final Signature sig = apiMethod.getSignature();
@@ -79,16 +74,8 @@ public class InjectGetter
 			ins.add(new GetField(instructions, field.getPoolField()));
 		}
 
-		if (getter instanceof Integer)
-		{
-			ins.add(new LDC(instructions, getter));
-			ins.add(new IMul(instructions));
-		}
-		else if (getter instanceof Long)
-		{
-			ins.add(new LDC(instructions, getter));
-			ins.add(new LMul(instructions));
-		}
+		if (getter != null)
+			InjectUtil.injectObfuscatedGetter(getter, instructions, ins::add);
 
 		ins.add(InjectUtil.createReturnForType(instructions, field.getType()));
 
