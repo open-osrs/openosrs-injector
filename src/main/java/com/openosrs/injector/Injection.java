@@ -23,6 +23,8 @@ import com.openosrs.injector.injectors.raw.RasterizerAlpha;
 import com.openosrs.injector.injectors.raw.RenderDraw;
 import com.openosrs.injector.injectors.raw.ScriptVM;
 import com.openosrs.injector.rsapi.RSApi;
+import com.openosrs.injector.transformers.InjectTransformer;
+import com.openosrs.injector.transformers.SourceChanger;
 import java.io.File;
 import java.io.IOException;
 import net.runelite.deob.util.JarUtil;
@@ -78,6 +80,8 @@ public class Injection extends InjectData implements InjectTaskHandler
 		inject(new HidePlayerAttacks(this));
 
 		validate(new InjectorValidator(this));
+
+		transform(new SourceChanger(this));
 	}
 
 	public void save(File outputJar) throws IOException
@@ -111,6 +115,17 @@ public class Injection extends InjectData implements InjectTaskHandler
 		{
 			throw new Injexception(name + " failed validation");
 		}
+	}
+
+	private void transform(InjectTransformer transformer)
+	{
+		final String name = transformer.getName();
+
+		log.info("Starting {}", name);
+
+		transformer.transform();
+
+		log.lifecycle("{} {}", name, transformer.getCompletionMsg());
 	}
 
 	public void runChildInjector(Injector injector) throws Injexception

@@ -66,14 +66,3 @@ val compileTestKotlin: KotlinCompile by tasks
 compileTestKotlin.kotlinOptions {
     jvmTarget = "1.8"
 }
-
-publishing {
-    repositories {
-        mavenLocal()
-    }
-    publications {
-        register("asd", MavenPublication::class) {
-            from(components["java"])
-        }
-    }
-}

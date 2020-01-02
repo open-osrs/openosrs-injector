@@ -7,7 +7,7 @@
  */
 package com.openosrs.injector;
 
-public class Injexception extends Exception
+public class Injexception extends RuntimeException
 {
 	public Injexception(String message)
 	{

@@ -9,14 +9,16 @@ package com.openosrs.injector;
 
 import com.openosrs.injector.injection.InjectData;
 import com.openosrs.injector.rsapi.RSApi;
-import static com.openosrs.injector.rsapi.RSApi.API_BASE;
 import com.openosrs.injector.rsapi.RSApiClass;
 import com.openosrs.injector.rsapi.RSApiMethod;
+import lombok.RequiredArgsConstructor;
 import net.runelite.asm.ClassFile;
 import net.runelite.asm.pool.Class;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
+import static com.openosrs.injector.rsapi.RSApi.API_BASE;
 
+@RequiredArgsConstructor
 public class InjectorValidator implements Validator
 {
 	private static final Logger log = Logging.getLogger(InjectorValidator.class);
@@ -24,11 +26,6 @@ public class InjectorValidator implements Validator
 	private final InjectData inject;
 
 	private int missing = 0, okay = 0, wtf = 0;
-
-	InjectorValidator(InjectData inject)
-	{
-		this.inject = inject;
-	}
 
 	public boolean validate()
 	{
