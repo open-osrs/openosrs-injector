@@ -13,8 +13,10 @@ plugins {
     `maven-publish`
 }
 
+val oprsver = "1.5.44-SNAPSHOT"
+
 group = "com.openosrs"
-version = "1.0.2.2"
+version = "1.0.2.3"
 
 repositories {
     mavenCentral()
@@ -29,19 +31,16 @@ dependencies {
     annotationProcessor("org.projectlombok:lombok:1.18.10")
     compileOnly("org.projectlombok:lombok:1.18.10")
 
-    implementation(kotlin("stdlib-jdk8"))
-    implementation("com.openosrs:deobfuscator:1.5.39-SNAPSHOT") {
-        exclude("org.slf4j", "slf4j-simple")
-        exclude("com.openosrs.rs", "runescape-api")
-        exclude("com.openosrs", "runelite-api")
-    }
-    implementation("com.google.guava:guava:28.1-jre")
     implementation("org.ow2.asm:asm:7.2")
+    implementation("org.ow2.asm:asm-util:7.2")
+    implementation("org.jetbrains:annotations:18.0.0")
+    implementation("com.google.guava:guava:28.1-jre")
+    implementation("com.openosrs:deobfuscator:${oprsver}") {
+        isTransitive = false
+    }
 
-
+    testCompileOnly("com.openosrs:injection-annotations:1.0")
     testImplementation("junit:junit:4.12")
-    testImplementation("com.openosrs:runelite-mixins:1.5.39-SNAPSHOT")
-    testCompileOnly("com.openosrs.rs:runescape-api:1.5.39-SNAPSHOT")
 }
 
 gradlePlugin {
@@ -54,8 +53,8 @@ gradlePlugin {
 }
 
 configure<JavaPluginConvention> {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
 }
 
 val compileKotlin: KotlinCompile by tasks
