@@ -125,13 +125,16 @@ public class RasterizerAlpha extends AbstractInjector
 						StackContext alphaPop = isub.getPops().get(0);
 						InstructionContext alphaPusher = alphaPop.getPushed();
 						InstructionContext isubResult = isub.getPushes().get(0).getPopped().get(0);
+						boolean shouldSubtractLocal = false;
 
 						if (pushesToSameVar(isubResult, alphaPusher))
 						{
-							alphaPusher = resolveFieldThroughInvokes(alphaPop);
+							shouldSubtractLocal = true;
+							alphaPusher = isubResult;
+							/*alphaPusher = resolveFieldThroughInvokes(alphaPop);
 
 							if (alphaPusher == null)
-								throw new RuntimeException("Alpha var is overwritten and we don't know what pushed it"); // cheeky unchecked
+								throw new RuntimeException("Alpha var is overwritten and we don't know what pushed it"); // cheeky unchecked*/
 						}
 
 						int storeIdx = instrs.getInstructions().indexOf(instruction);
@@ -139,13 +142,22 @@ public class RasterizerAlpha extends AbstractInjector
 						Instruction alphaPushI = alphaPusher.getInstruction();
 						if (alphaPushI instanceof GetStatic)
 						{
-							//instrs.addInstruction(storeIdx++, new LDC(instrs, 255));
+							instrs.addInstruction(storeIdx++, new LDC(instrs, 255));
 							instrs.addInstruction(storeIdx++, new GetStatic(instrs, ((GetStatic) alphaPushI).getField()));
-							//instrs.addInstruction(storeIdx++, new ISub(instrs, InstructionType.ISUB));
+							instrs.addInstruction(storeIdx++, new ISub(instrs, InstructionType.ISUB));
 						}
 						else if (alphaPushI instanceof LVTInstruction)
 						{
-							instrs.addInstruction(storeIdx++, new ILoad(instrs, ((LVTInstruction) alphaPushI).getVariableIndex()));
+							if (shouldSubtractLocal)
+							{
+								instrs.addInstruction(storeIdx++, new LDC(instrs, 255));
+								instrs.addInstruction(storeIdx++, new ILoad(instrs, ((LVTInstruction) alphaPushI).getVariableIndex()));
+								instrs.addInstruction(storeIdx++, new ISub(instrs, InstructionType.ISUB));
+							}
+							else
+							{
+								instrs.addInstruction(storeIdx++, new ILoad(instrs, ((LVTInstruction) alphaPushI).getVariableIndex()));
+							}
 						}
 
 						instrs.getInstructions().set(storeIdx, new InvokeStatic(instrs, DRAWALPHA));
