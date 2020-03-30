@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2019, Lucas <https://github.com/Lucwousin>
+ * Copyright (c) 2020, ThatGamerBlue <https://github.com/ThatGamerBlue>
  * All rights reserved.
  *
  * This code is licensed under GPL3, see the complete license in
@@ -11,10 +12,14 @@ import com.openosrs.injector.InjectUtil;
 import com.openosrs.injector.Injexception;
 import com.openosrs.injector.injection.InjectData;
 import com.openosrs.injector.injectors.AbstractInjector;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.ListIterator;
 import net.runelite.asm.Method;
+import net.runelite.asm.Type;
 import net.runelite.asm.attributes.code.Instruction;
+import net.runelite.asm.attributes.code.InstructionType;
 import net.runelite.asm.attributes.code.Instructions;
 import net.runelite.asm.attributes.code.Label;
 import net.runelite.asm.attributes.code.instruction.types.ComparisonInstruction;
@@ -25,14 +30,17 @@ import net.runelite.asm.attributes.code.instructions.GetStatic;
 import net.runelite.asm.attributes.code.instructions.IAnd;
 import net.runelite.asm.attributes.code.instructions.IfACmpEq;
 import net.runelite.asm.attributes.code.instructions.IfACmpNe;
+import net.runelite.asm.attributes.code.instructions.IfEq;
 import net.runelite.asm.attributes.code.instructions.IfICmpNe;
 import net.runelite.asm.attributes.code.instructions.IfNe;
 import net.runelite.asm.attributes.code.instructions.InvokeStatic;
+import net.runelite.asm.attributes.code.instructions.LDC;
+import net.runelite.asm.attributes.code.instructions.Return;
 import net.runelite.asm.pool.Field;
 
-public class HidePlayerAttacks extends AbstractInjector
+public class AddPlayerToMenu extends AbstractInjector
 {
-	public HidePlayerAttacks(InjectData inject)
+	public AddPlayerToMenu(InjectData inject)
 	{
 		super(inject);
 	}
@@ -40,22 +48,64 @@ public class HidePlayerAttacks extends AbstractInjector
 	public void inject() throws Injexception
 	{
 		final Method addPlayerOptions = InjectUtil.findMethod(inject, "addPlayerToMenu");
-		final net.runelite.asm.pool.Method shouldHideAttackOptionFor = inject.getVanilla().findClass("client").findMethod("shouldHideAttackOptionFor").getPoolMethod();
+		final net.runelite.asm.pool.Method shouldHideAttackOptionFor =
+			inject.getVanilla().findClass("client").findMethod("shouldHideAttackOptionFor").getPoolMethod();
+		final net.runelite.asm.pool.Method shouldDrawMethod =
+			inject.getVanilla().findStaticMethod("shouldDraw").getPoolMethod();
+		final net.runelite.asm.pool.Field printMenuActionsField =
+			inject.getVanilla().findClass("client").findField("printMenuActions",
+				Type.BOOLEAN).getPoolField();
 
 		try
 		{
+			injectSameTileFix(addPlayerOptions, shouldDrawMethod, printMenuActionsField);
 			injectHideAttack(addPlayerOptions, shouldHideAttackOptionFor);
 			injectHideCast(addPlayerOptions, shouldHideAttackOptionFor);
 		}
 		catch (Injexception | AssertionError e)
 		{
-			log.warn("HidePlayerAttacks failed, but as this doesn't mess up anything other than that functionality, we're carrying on", e);
+			log.warn(
+				"HidePlayerAttacks failed, but as this doesn't mess up anything other than that functionality, we're carrying on",
+				e);
 		}
 	}
 
-	private void injectHideAttack(Method addPlayerOptions, net.runelite.asm.pool.Method shouldHideAttackOptionFor) throws Injexception
+	private void injectSameTileFix(Method addPlayerOptions, net.runelite.asm.pool.Method shouldDrawMethod, net.runelite.asm.pool.Field printMenuActionsField)
 	{
-		final Field AttackOption_hidden = InjectUtil.findField(inject, "AttackOption_hidden", "AttackOption").getPoolField();
+		// ALOAD 0
+		// ICONST_0
+		// INVOKESTATIC Scene.shouldDraw
+		// IFNE CONTINUE_LABEL                     if returned true then jump to continue
+		// GETSTATIC Client.printMenuActions
+		// IFEQ CONTINUE_LABEL                     if returned false them jump to continue
+		// RETURN
+		// CONTINUE_LABEL
+		// REST OF METHOD GOES HERE
+		Instructions insns = addPlayerOptions.getCode().getInstructions();
+		Label CONTINUE_LABEL = new Label(insns);
+		List<Instruction> prependList = new ArrayList<>()
+		{{
+			add(new ALoad(insns, 0));
+			add(new LDC(insns, 0));
+			add(new InvokeStatic(insns, shouldDrawMethod));
+			add(new IfNe(insns, CONTINUE_LABEL));
+			add(new GetStatic(insns, printMenuActionsField));
+			add(new IfEq(insns, CONTINUE_LABEL));
+			add(new Return(insns, InstructionType.RETURN));
+			add(CONTINUE_LABEL);
+		}};
+		int i = 0;
+		for (Instruction instruction : prependList)
+		{
+			insns.addInstruction(i++, instruction);
+		}
+	}
+
+	private void injectHideAttack(Method addPlayerOptions, net.runelite.asm.pool.Method shouldHideAttackOptionFor)
+	throws Injexception
+	{
+		final Field AttackOption_hidden =
+			InjectUtil.findField(inject, "AttackOption_hidden", "AttackOption").getPoolField();
 		final Field attackOption = InjectUtil.findField(inject, "playerAttackOption", "Client").getPoolField();
 
 		// GETSTATIC					GETSTATIC
@@ -143,7 +193,8 @@ public class HidePlayerAttacks extends AbstractInjector
 		ins.addInstruction(injectIdx, i3);
 	}
 
-	private void injectHideCast(Method addPlayerOptions, net.runelite.asm.pool.Method shouldHideAttackOptionFor) throws Injexception
+	private void injectHideCast(Method addPlayerOptions, net.runelite.asm.pool.Method shouldHideAttackOptionFor)
+	throws Injexception
 	{
 		// LABEL before
 		// BIPUSH 8
@@ -176,10 +227,17 @@ public class HidePlayerAttacks extends AbstractInjector
 			if ((i instanceof BiPush) && (byte) ((BiPush) i).getConstant() == 8)
 			{
 				if (!b1)
+				{
 					b1 = true;
+				}
 				else if (!b2)
+				{
 					b2 = true;
-				else throw new Injexception("3 bipushes? fucking mental, Hide spells failed btw");
+				}
+				else
+				{
+					throw new Injexception("3 bipushes? fucking mental, Hide spells failed btw");
+				}
 
 				continue;
 			}
@@ -195,7 +253,6 @@ public class HidePlayerAttacks extends AbstractInjector
 				getstatic = true;
 				continue;
 			}
-
 
 			if (!(i instanceof JumpingInstruction))
 			{
