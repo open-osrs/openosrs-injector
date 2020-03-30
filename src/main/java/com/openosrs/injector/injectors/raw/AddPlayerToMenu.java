@@ -17,7 +17,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import net.runelite.asm.Method;
-import net.runelite.asm.Type;
 import net.runelite.asm.attributes.code.Instruction;
 import net.runelite.asm.attributes.code.InstructionType;
 import net.runelite.asm.attributes.code.Instructions;
@@ -30,7 +29,6 @@ import net.runelite.asm.attributes.code.instructions.GetStatic;
 import net.runelite.asm.attributes.code.instructions.IAnd;
 import net.runelite.asm.attributes.code.instructions.IfACmpEq;
 import net.runelite.asm.attributes.code.instructions.IfACmpNe;
-import net.runelite.asm.attributes.code.instructions.IfEq;
 import net.runelite.asm.attributes.code.instructions.IfICmpNe;
 import net.runelite.asm.attributes.code.instructions.IfNe;
 import net.runelite.asm.attributes.code.instructions.InvokeStatic;
@@ -52,13 +50,10 @@ public class AddPlayerToMenu extends AbstractInjector
 			inject.getVanilla().findClass("client").findMethod("shouldHideAttackOptionFor").getPoolMethod();
 		final net.runelite.asm.pool.Method shouldDrawMethod =
 			inject.getVanilla().findStaticMethod("shouldDraw").getPoolMethod();
-		final net.runelite.asm.pool.Field printMenuActionsField =
-			inject.getVanilla().findClass("client").findField("printMenuActions",
-				Type.BOOLEAN).getPoolField();
 
 		try
 		{
-			injectSameTileFix(addPlayerOptions, shouldDrawMethod, printMenuActionsField);
+			injectSameTileFix(addPlayerOptions, shouldDrawMethod);
 			injectHideAttack(addPlayerOptions, shouldHideAttackOptionFor);
 			injectHideCast(addPlayerOptions, shouldHideAttackOptionFor);
 		}
@@ -70,14 +65,12 @@ public class AddPlayerToMenu extends AbstractInjector
 		}
 	}
 
-	private void injectSameTileFix(Method addPlayerOptions, net.runelite.asm.pool.Method shouldDrawMethod, net.runelite.asm.pool.Field printMenuActionsField)
+	private void injectSameTileFix(Method addPlayerOptions, net.runelite.asm.pool.Method shouldDrawMethod)
 	{
 		// ALOAD 0
 		// ICONST_0
 		// INVOKESTATIC Scene.shouldDraw
 		// IFNE CONTINUE_LABEL                     if returned true then jump to continue
-		// GETSTATIC Client.printMenuActions
-		// IFEQ CONTINUE_LABEL                     if returned false them jump to continue
 		// RETURN
 		// CONTINUE_LABEL
 		// REST OF METHOD GOES HERE
@@ -89,8 +82,6 @@ public class AddPlayerToMenu extends AbstractInjector
 			add(new LDC(insns, 0));
 			add(new InvokeStatic(insns, shouldDrawMethod));
 			add(new IfNe(insns, CONTINUE_LABEL));
-			add(new GetStatic(insns, printMenuActionsField));
-			add(new IfEq(insns, CONTINUE_LABEL));
 			add(new Return(insns, InstructionType.RETURN));
 			add(CONTINUE_LABEL);
 		}};
