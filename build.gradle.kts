@@ -11,12 +11,14 @@ plugins {
     id("java-gradle-plugin")
     kotlin("jvm") version "1.3.50"
     `maven-publish`
+    id("com.github.ben-manes.versions") version "0.28.0"
+    id("se.patrikerdes.use-latest-versions") version "0.2.13"
 }
 
-val oprsver = "3.1.0"
+val oprsver = "3.3.1"
 
 group = "com.openosrs"
-version = "1.0.3.3"
+version = "1.1.1"
 
 repositories {
     mavenCentral()
@@ -28,19 +30,19 @@ repositories {
 }
 
 dependencies {
-    annotationProcessor("org.projectlombok:lombok:1.18.10")
-    compileOnly("org.projectlombok:lombok:1.18.10")
+    annotationProcessor("org.projectlombok:lombok:1.18.12")
+    compileOnly("org.projectlombok:lombok:1.18.12")
 
-    implementation("org.ow2.asm:asm:7.2")
-    implementation("org.ow2.asm:asm-util:7.2")
-    implementation("org.jetbrains:annotations:18.0.0")
-    implementation("com.google.guava:guava:28.1-jre")
+    implementation("org.ow2.asm:asm:8.0.1")
+    implementation("org.ow2.asm:asm-util:8.0.1")
+    implementation("org.jetbrains:annotations:19.0.0")
+    implementation("com.google.guava:guava:29.0-jre")
     implementation("com.openosrs:deobfuscator:${oprsver}") {
         isTransitive = false
     }
 
     testCompileOnly("com.openosrs:injection-annotations:1.0")
-    testImplementation("junit:junit:4.12")
+    testImplementation("junit:junit:4.13")
 }
 
 gradlePlugin {
