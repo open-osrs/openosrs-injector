@@ -18,7 +18,7 @@ plugins {
 val oprsver = "3.3.1"
 
 group = "com.openosrs"
-version = "1.1.0"
+version = "1.1.1"
 
 repositories {
     mavenCentral()
