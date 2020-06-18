@@ -7,7 +7,7 @@
  */
 package com.openosrs.injector.injectors.raw;
 
-import com.openosrs.injector.Injexception;
+import com.openosrs.injector.InjectException;
 import com.openosrs.injector.injection.InjectData;
 import com.openosrs.injector.injectors.AbstractInjector;
 import java.util.ListIterator;
@@ -27,7 +27,7 @@ public class Occluder extends AbstractInjector
 		super(inject);
 	}
 
-	public void inject() throws Injexception
+	public void inject() throws InjectException
 	{
 		/*
 		 * This class the max view distance length, higher than this is useless though
@@ -64,6 +64,6 @@ public class Occluder extends AbstractInjector
 		}
 
 		if (replaced != 10)
-			throw new Injexception("Only found " + replaced + " 25's to replace in occlude instead of expected 10");
+			throw new InjectException("Only found " + replaced + " 25's to replace in occlude instead of expected 10");
 	}
 }

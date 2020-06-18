@@ -7,19 +7,19 @@
  */
 package com.openosrs.injector;
 
-public class Injexception extends RuntimeException
+public class InjectException extends RuntimeException
 {
-	public Injexception(String message)
+	public InjectException(String message)
 	{
 		super(message);
 	}
 
-	public Injexception(Throwable cause)
+	public InjectException(Throwable cause)
 	{
 		super(cause);
 	}
 
-	public Injexception(String message, Throwable cause)
+	public InjectException(String message, Throwable cause)
 	{
 		super(message, cause);
 	}

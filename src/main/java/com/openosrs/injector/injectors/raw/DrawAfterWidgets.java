@@ -31,7 +31,7 @@
 package com.openosrs.injector.injectors.raw;
 
 import com.openosrs.injector.InjectUtil;
-import com.openosrs.injector.Injexception;
+import com.openosrs.injector.InjectException;
 import com.openosrs.injector.injection.InjectData;
 import static com.openosrs.injector.injection.InjectData.HOOKS;
 import com.openosrs.injector.injectors.AbstractInjector;
@@ -57,7 +57,7 @@ public class DrawAfterWidgets extends AbstractInjector
 		super(inject);
 	}
 
-	public void inject() throws Injexception
+	public void inject() throws InjectException
 	{
 		/*
 		 * This call has to be injected using raw injection because the
@@ -107,7 +107,7 @@ public class DrawAfterWidgets extends AbstractInjector
 
 		if (noClip == null)
 		{
-			throw new Injexception("Mapped method \"Rasterizer2D_resetClip\" could not be found.");
+			throw new InjectException("Mapped method \"Rasterizer2D_resetClip\" could not be found.");
 		}
 
 		net.runelite.asm.pool.Method poolNoClip = noClip.getPoolMethod();
@@ -162,7 +162,7 @@ public class DrawAfterWidgets extends AbstractInjector
 				{
 					// If we get here, we're either in the wrong method
 					// or Jagex has removed the "if (535573958 * kl != -1)"
-					//	log.debug("Could not find the label for jumping to the " + noClip + " call in " + m);
+					//	log.debug("[DEBUG] Could not find the label for jumping to the " + noClip + " call in " + m);
 					continue;
 				}
 
@@ -245,7 +245,7 @@ public class DrawAfterWidgets extends AbstractInjector
 
 					instructions.addInstruction(instructions.getInstructions().indexOf(l) + 1, invoke);
 
-					log.debug("injectDrawAfterWidgets injected a call after " + l);
+					log.debug("[DEBUG] injectDrawAfterWidgets injected a call after " + l);
 
 					injected = true;
 				}
@@ -254,7 +254,7 @@ public class DrawAfterWidgets extends AbstractInjector
 
 		if (!injected)
 		{
-			throw new Injexception("injectDrawAfterWidgets failed to inject!");
+			throw new InjectException("injectDrawAfterWidgets failed to inject!");
 		}
 	}
 }

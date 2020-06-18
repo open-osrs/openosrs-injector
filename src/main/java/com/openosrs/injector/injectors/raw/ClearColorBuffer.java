@@ -8,7 +8,7 @@
 package com.openosrs.injector.injectors.raw;
 
 import com.openosrs.injector.InjectUtil;
-import com.openosrs.injector.Injexception;
+import com.openosrs.injector.InjectException;
 import com.openosrs.injector.injection.InjectData;
 import static com.openosrs.injector.injection.InjectData.HOOKS;
 import com.openosrs.injector.injectors.AbstractInjector;
@@ -39,7 +39,7 @@ public class ClearColorBuffer extends AbstractInjector
 		super(inject);
 	}
 
-	public void inject() throws Injexception
+	public void inject() throws InjectException
 	{
 		/*
 		 * This class stops the client from basically painting everything black before the scene is drawn
@@ -85,7 +85,7 @@ public class ClearColorBuffer extends AbstractInjector
 
 				Instructions ins = instr.getInstructions();
 				ins.replace(instr, new InvokeStatic(ins, CLEARBUFFER));
-				log.debug("Injected drawRectangle at {}", methodContext.getMethod().getPoolMethod());
+				log.debug("[DEBUG] Injected drawRectangle at {}", methodContext.getMethod().getPoolMethod());
 			}
 		}
 	}

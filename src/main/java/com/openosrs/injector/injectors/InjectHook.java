@@ -31,7 +31,7 @@ package com.openosrs.injector.injectors;
 
 import com.google.common.collect.Lists;
 import com.openosrs.injector.InjectUtil;
-import com.openosrs.injector.Injexception;
+import com.openosrs.injector.InjectException;
 import com.openosrs.injector.injection.InjectData;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -83,17 +83,17 @@ public class InjectHook extends AbstractInjector
 	}
 
 	@Override
-	public void inject() throws Injexception
+	public void inject() throws InjectException
 	{
 		for (Map.Entry<Provider<ClassFile>, List<ClassFile>> entry : mixinTargets.entrySet())
 			injectMethods(entry.getKey(), entry.getValue());
 
 		injectHooks();
 
-		log.info("Injected {} field hooks.", injectedHooks);
+		log.info("[INFO] Injected {} field hooks.", injectedHooks);
 	}
 
-	private void injectMethods(Provider<ClassFile> mixinProvider, List<ClassFile> targetClasses) throws Injexception
+	private void injectMethods(Provider<ClassFile> mixinProvider, List<ClassFile> targetClasses) throws InjectException
 	{
 		final ClassFile mixinClass = mixinProvider.get();
 
@@ -189,7 +189,7 @@ public class InjectHook extends AbstractInjector
 					// idx + 1 to insert after the set
 					injectCallback(ins, idx + 1, hookInfo, null, objectStackContext);
 			}
-			catch (Injexception ex)
+			catch (InjectException ex)
 			{
 				throw new RuntimeException(ex);
 			}
@@ -237,7 +237,7 @@ public class InjectHook extends AbstractInjector
 				objectStackContext = arrayReferencePushed.getPops().get(0);
 
 			// inject hook after 'i'
-			log.debug("Found array injection location for hook {} at instruction {}", hookInfo.method.getName(), i);
+			log.debug("[DEBUG] Found array injection location for hook {} at instruction {}", hookInfo.method.getName(), i);
 			++injectedHooks;
 
 			int idx = ins.getInstructions().indexOf(i);
@@ -250,7 +250,7 @@ public class InjectHook extends AbstractInjector
 				else
 					injectCallback(ins, idx + 1, hookInfo, index, objectStackContext);
 			}
-			catch (Injexception ex)
+			catch (InjectException ex)
 			{
 				throw new RuntimeException(ex);
 			}
@@ -259,7 +259,8 @@ public class InjectHook extends AbstractInjector
 		e.run();
 	}
 
-	private void injectCallbackBefore(Instructions ins, int idx, HookInfo hookInfo, StackContext index, StackContext object, StackContext value) throws Injexception
+	private void injectCallbackBefore(Instructions ins, int idx, HookInfo hookInfo, StackContext index, StackContext object, StackContext value) throws
+																																				 InjectException
 	{
 		Signature signature = hookInfo.method.getDescriptor();
 		Type methodArgumentType = signature.getTypeOfArg(0);
@@ -267,7 +268,7 @@ public class InjectHook extends AbstractInjector
 		if (!hookInfo.method.isStatic())
 		{
 			if (object == null)
-				throw new Injexception("null object");
+				throw new InjectException("null object");
 
 			ins.getInstructions().add(idx++, new Dup(ins)); // dup value
 			idx = recursivelyPush(ins, idx, object);
@@ -321,12 +322,13 @@ public class InjectHook extends AbstractInjector
 		return idx;
 	}
 
-	private void injectCallback(Instructions ins, int idx, HookInfo hookInfo, StackContext index, StackContext objectPusher) throws Injexception
+	private void injectCallback(Instructions ins, int idx, HookInfo hookInfo, StackContext index, StackContext objectPusher) throws
+																															 InjectException
 	{
 		if (!hookInfo.method.isStatic())
 		{
 			if (objectPusher == null)
-				throw new Injexception("Null object pusher");
+				throw new InjectException("Null object pusher");
 
 			idx = recursivelyPush(ins, idx, objectPusher);
 		}

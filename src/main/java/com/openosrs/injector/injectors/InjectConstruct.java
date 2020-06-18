@@ -31,7 +31,7 @@
 package com.openosrs.injector.injectors;
 
 import com.openosrs.injector.InjectUtil;
-import com.openosrs.injector.Injexception;
+import com.openosrs.injector.InjectException;
 import com.openosrs.injector.injection.InjectData;
 import com.openosrs.injector.rsapi.RSApiMethod;
 import static com.openosrs.injector.rsapi.RSApi.CONSTRUCT;
@@ -63,7 +63,7 @@ public class InjectConstruct extends AbstractInjector
 	}
 
 	@Override
-	public void inject() throws Injexception
+	public void inject() throws InjectException
 	{
 		for (RSApiMethod apiMethod : inject.getRsApi().getConstructs())
 		{
@@ -81,12 +81,12 @@ public class InjectConstruct extends AbstractInjector
 			injected++;
 		}
 
-		log.info("Injected {} constructors", injected);
+		log.info("[INFO] Injected {} constructors", injected);
 	}
 
-	private void injectConstruct(ClassFile targetClass, Method apiMethod) throws Injexception
+	private void injectConstruct(ClassFile targetClass, Method apiMethod) throws InjectException
 	{
-		log.debug("Injecting constructor for {} into {}", apiMethod, targetClass.getPoolClass());
+		log.debug("[DEBUG] Injecting constructor for {} into {}", apiMethod, targetClass.getPoolClass());
 
 		final Type returnval = apiMethod.getType().getReturnValue();
 
@@ -103,7 +103,7 @@ public class InjectConstruct extends AbstractInjector
 
 		final net.runelite.asm.Method constructor = classToConstruct.findMethod("<init>", constr);
 		if (constructor == null)
-			throw new Injexception("Unable to find constructor for " + classToConstruct.getName() + ".<init>" + constr);
+			throw new InjectException("Unable to find constructor for " + classToConstruct.getName() + ".<init>" + constr);
 
 
 		net.runelite.asm.Method setterMethod = new net.runelite.asm.Method(targetClass, apiMethod.getName(), apiMethod.getType());

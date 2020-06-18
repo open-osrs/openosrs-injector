@@ -31,7 +31,7 @@
 package com.openosrs.injector.injectors.rsapi;
 
 import com.openosrs.injector.InjectUtil;
-import com.openosrs.injector.Injexception;
+import com.openosrs.injector.InjectException;
 import com.openosrs.injector.rsapi.RSApiMethod;
 import java.util.List;
 import net.runelite.asm.ClassFile;
@@ -51,11 +51,12 @@ import net.runelite.asm.signature.Signature;
 
 public class InjectInvoke
 {
-	public static void inject(ClassFile targetClass, RSApiMethod apiMethod, Method vanillaMethod, String garbage) throws Injexception
+	public static void inject(ClassFile targetClass, RSApiMethod apiMethod, Method vanillaMethod, String garbage) throws
+																												  InjectException
 	{
 		if (targetClass.findMethod(apiMethod.getName(), apiMethod.getSignature()) != null)
 		{
-			throw new Injexception("Duplicate invoker method " + apiMethod.getMethod().toString());
+			throw new InjectException("Duplicate invoker method " + apiMethod.getMethod().toString());
 		}
 
 		final Method method = new Method(targetClass, apiMethod.getName(), apiMethod.getSignature());

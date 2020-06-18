@@ -31,7 +31,7 @@
 package com.openosrs.injector.injectors.raw;
 
 import com.openosrs.injector.InjectUtil;
-import com.openosrs.injector.Injexception;
+import com.openosrs.injector.InjectException;
 import com.openosrs.injector.injection.InjectData;
 import com.openosrs.injector.injectors.AbstractInjector;
 import java.util.HashSet;
@@ -71,7 +71,7 @@ public class ScriptVM extends AbstractInjector
 		super(inject);
 	}
 
-	public void inject() throws Injexception
+	public void inject() throws InjectException
 	{
 		final ClassGroup vanilla = inject.getVanilla();
 
@@ -109,12 +109,12 @@ public class ScriptVM extends AbstractInjector
 		final Field scriptInstructions = InjectUtil.findField(inject, "opcodes", "Script");
 		final Field scriptStatePC = InjectUtil.findField(inject, "pc", "ScriptFrame");
 
-		// Next 4 should be injected by mixins, so don't need fail fast
+		// Next 5 should be injected by mixins, so don't need fail fast
 		final ClassFile vanillaClient = vanilla.findClass("client");
 
 		final Method runScript = vanillaClient.findStaticMethod("copy$runScript");
 		final Method vmExecuteOpcode = vanillaClient.findStaticMethod("vmExecuteOpcode");
-		final Field currentScriptField = vanillaClient.findField("currentScript");
+		final Method setCurrentScript = vanillaClient.findStaticMethod("setCurrentScript");
 		final Field currentScriptPCField = vanillaClient.findField("currentScriptPC");
 
 		Execution e = new Execution(inject.getVanilla());
@@ -188,7 +188,7 @@ public class ScriptVM extends AbstractInjector
 		// This has to run after the first loop because it relies on instructionArrayLocalVar being set
 		if (instructionArrayLocalVar == null)
 		{
-			throw new Injexception("Unable to find local instruction array");
+			throw new InjectException("Unable to find local instruction array");
 		}
 		for (InstructionContext instrCtx : methodContext.getInstructionContexts())
 		{
@@ -227,8 +227,8 @@ public class ScriptVM extends AbstractInjector
 			int outerSciptIdx = scriptStores.stream()
 				.mapToInt(AStore::getVariableIndex)
 				.reduce(Math::min)
-				.orElseThrow(() -> new Injexception("Unable to find any Script AStores in runScript"));
-			log.debug("Found script index {}", outerSciptIdx);
+				.orElseThrow(() -> new InjectException("Unable to find any Script AStores in runScript"));
+			log.debug("[DEBUG] Found script index {}", outerSciptIdx);
 
 			ListIterator<Instruction> instrIter = instrs.getInstructions().listIterator();
 			while (instrIter.hasNext())
@@ -242,7 +242,7 @@ public class ScriptVM extends AbstractInjector
 					{
 						instrIter.previous();
 						instrIter.add(new Dup(instrs));
-						instrIter.add(new PutStatic(instrs, currentScriptField));
+						instrIter.add(new InvokeStatic(instrs, setCurrentScript.getPoolMethod()));
 						instrIter.next();
 					}
 				}
@@ -253,9 +253,9 @@ public class ScriptVM extends AbstractInjector
 		{
 			if (pcLocalVar == null)
 			{
-				throw new Injexception("Unable to find ILoad for invokedFromPc IStore");
+				throw new InjectException("Unable to find ILoad for invokedFromPc IStore");
 			}
-			log.debug("Found pc index {}", pcLocalVar);
+			log.debug("[DEBUG] Found pc index {}", pcLocalVar);
 
 			ListIterator<Instruction> instrIter = instrs.getInstructions().listIterator();
 			while (instrIter.hasNext())
@@ -287,10 +287,10 @@ public class ScriptVM extends AbstractInjector
 		}
 
 		// Inject call to vmExecuteOpcode
-		log.debug("Found instruction array index {}", instructionArrayLocalVar);
+		log.debug("[DEBUG] Found instruction array index {}", instructionArrayLocalVar);
 		if (currentOpcodeStore == null)
 		{
-			throw new Injexception("Unable to find IStore for current opcode");
+			throw new InjectException("Unable to find IStore for current opcode");
 		}
 
 		int istorepc = instrs.getInstructions().indexOf(currentOpcodeStore);

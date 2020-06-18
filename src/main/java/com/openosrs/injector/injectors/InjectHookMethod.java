@@ -31,7 +31,7 @@
 package com.openosrs.injector.injectors;
 
 import com.openosrs.injector.InjectUtil;
-import com.openosrs.injector.Injexception;
+import com.openosrs.injector.InjectException;
 import com.openosrs.injector.injection.InjectData;
 import java.util.List;
 import java.util.ListIterator;
@@ -62,15 +62,15 @@ public class InjectHookMethod extends AbstractInjector
 	}
 
 	@Override
-	public void inject() throws Injexception
+	public void inject() throws InjectException
 	{
 		for (Map.Entry<Provider<ClassFile>, List<ClassFile>> entry : mixinTargets.entrySet())
 			injectMethods(entry.getKey(), entry.getValue());
 
-		log.info("Injected {} method hooks", injected);
+		log.info("[INFO] Injected {} method hooks", injected);
 	}
 
-	private void injectMethods(Provider<ClassFile> mixinProvider, List<ClassFile> targetClasses) throws Injexception
+	private void injectMethods(Provider<ClassFile> mixinProvider, List<ClassFile> targetClasses) throws InjectException
 	{
 		final ClassFile mixinClass = mixinProvider.get();
 
@@ -83,7 +83,7 @@ public class InjectHookMethod extends AbstractInjector
 					continue;
 
 				if (!mixinMethod.getDescriptor().isVoid())
-					throw new Injexception("Method hook " + mixinMethod.getPoolMethod() + " doesn't have void return type");
+					throw new InjectException("Method hook " + mixinMethod.getPoolMethod() + " doesn't have void return type");
 
 				final String hookName = methodHook.getElement().getString();
 				final boolean end = methodHook.getElements().size() == 2 && methodHook.getElements().get(1).getValue().equals(true);
@@ -101,7 +101,7 @@ public class InjectHookMethod extends AbstractInjector
 
 				inject(targetMethod, hookMethod, end);
 
-				log.debug("Injected method hook {} in {}", hookMethod, targetMethod);
+				log.debug("[DEBUG] Injected method hook {} in {}", hookMethod, targetMethod);
 				++injected;
 			}
 		}

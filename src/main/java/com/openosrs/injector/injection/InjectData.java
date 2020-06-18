@@ -9,7 +9,7 @@ package com.openosrs.injector.injection;
 
 import com.google.common.collect.ImmutableMap;
 import com.openosrs.injector.InjectUtil;
-import com.openosrs.injector.Injexception;
+import com.openosrs.injector.InjectException;
 import com.openosrs.injector.injectors.Injector;
 import com.openosrs.injector.rsapi.RSApi;
 import java.util.HashMap;
@@ -64,7 +64,7 @@ public abstract class InjectData
 		this.toVanilla = initToVanilla();
 	}
 
-	public abstract void runChildInjector(Injector injector) throws Injexception;
+	public abstract void runChildInjector(Injector injector) throws InjectException;
 
 	private Map<ClassFile, ClassFile> initToVanilla()
 	{

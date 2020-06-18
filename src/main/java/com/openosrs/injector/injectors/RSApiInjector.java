@@ -31,7 +31,7 @@
 package com.openosrs.injector.injectors;
 
 import com.openosrs.injector.InjectUtil;
-import com.openosrs.injector.Injexception;
+import com.openosrs.injector.InjectException;
 import com.openosrs.injector.injection.InjectData;
 import com.openosrs.injector.injectors.rsapi.InjectGetter;
 import com.openosrs.injector.injectors.rsapi.InjectInvoke;
@@ -62,7 +62,7 @@ public class RSApiInjector extends AbstractInjector
 		super(inject);
 	}
 
-	public void inject() throws Injexception
+	public void inject() throws InjectException
 	{
 		for (final ClassFile deobClass : inject.getDeobfuscated())
 		{
@@ -74,10 +74,10 @@ public class RSApiInjector extends AbstractInjector
 
 		retryFailures();
 
-		log.info("Injected {} getters, {} setters, and {} invokers", get, set, voke);
+		log.info("[INFO] Injected {} getters, {} setters, and {} invokers", get, set, voke);
 	}
 
-	private void injectFields(ClassFile deobClass, RSApiClass implementingClass) throws Injexception
+	private void injectFields(ClassFile deobClass, RSApiClass implementingClass) throws InjectException
 	{
 		for (Field deobField : deobClass.getFields())
 		{
@@ -153,13 +153,13 @@ public class RSApiInjector extends AbstractInjector
 			final Number getter = DeobAnnotations.getObfuscatedGetter(deobField);
 
 			if (deobField.isStatic() != vanillaField.isStatic()) // Can this even happen
-				throw new Injexception("Something went horribly wrong, and this should honestly never happen, but you never know. Btw it's the static-ness");
+				throw new InjectException("Something went horribly wrong, and this should honestly never happen, but you never know. Btw it's the static-ness");
 
 			inject(matching, deobField, vanillaField, getter);
 		}
 	}
 
-	private void injectMethods(ClassFile deobClass, RSApiClass implementingClass) throws Injexception
+	private void injectMethods(ClassFile deobClass, RSApiClass implementingClass) throws InjectException
 	{
 		for (Method deobMethod : deobClass.getMethods())
 		{
@@ -205,17 +205,17 @@ public class RSApiInjector extends AbstractInjector
 				final ClassFile targetClass = InjectUtil.vanillaFromApiMethod(inject, apiMethod);
 				final Method vanillaMethod = inject.toVanilla(deobMethod);
 				final String garbage = DeobAnnotations.getDecoder(deobMethod);
-				log.debug("Injecting invoker {} for {} into {}", apiMethod.getMethod(), vanillaMethod.getPoolMethod(), targetClass.getPoolClass());
+				log.debug("[DEBUG] Injecting invoker {} for {} into {}", apiMethod.getMethod(), vanillaMethod.getPoolMethod(), targetClass.getPoolClass());
 				InjectInvoke.inject(targetClass, apiMethod, vanillaMethod, garbage);
 				++voke;
 				apiMethod.setInjected(true);
 			}
 			else if (matching.size() != 0)
-				throw new Injexception("Multiple api imports matching method " + deobMethod.getPoolMethod());
+				throw new InjectException("Multiple api imports matching method " + deobMethod.getPoolMethod());
 		}
 	}
 
-	private void retryFailures() throws Injexception
+	private void retryFailures() throws InjectException
 	{
 		for (Map.Entry<Field, List<RSApiMethod>> entry : retryFields.entrySet())
 		{
@@ -225,7 +225,7 @@ public class RSApiInjector extends AbstractInjector
 			matched.removeIf(RSApiMethod::isInjected);
 
 			if (matched.size() > 2)
-				throw new Injexception("More than 2 imported api methods for field " + deobField.getPoolField());
+				throw new InjectException("More than 2 imported api methods for field " + deobField.getPoolField());
 
 			final Field vanillaField = inject.toVanilla(deobField);
 			final Number getter = DeobAnnotations.getObfuscatedGetter(deobField);
@@ -257,7 +257,7 @@ public class RSApiInjector extends AbstractInjector
 		return matching;
 	}
 
-	private void inject(List<RSApiMethod> matched, Field field, Field targetField, Number getter) throws Injexception
+	private void inject(List<RSApiMethod> matched, Field field, Field targetField, Number getter) throws InjectException
 	{
 		for (RSApiMethod apiMethod : matched)
 		{
@@ -267,7 +267,7 @@ public class RSApiInjector extends AbstractInjector
 			if (apiMethod.getSignature().isVoid())
 			{
 				++set;
-				log.debug("Injecting setter {} for {} into {}", apiMethod.getMethod(), field.getPoolField(), targetClass.getPoolClass());
+				log.debug("[DEBUG] Injecting setter {} for {} into {}", apiMethod.getMethod(), field.getPoolField(), targetClass.getPoolClass());
 				InjectSetter.inject(
 					targetClass,
 					apiMethod,
@@ -278,7 +278,7 @@ public class RSApiInjector extends AbstractInjector
 			else
 			{
 				++get;
-				log.debug("Injecting getter {} for {} into {}", apiMethod.getMethod(), field.getPoolField(), targetClass.getPoolClass());
+				log.debug("[DEBUG] Injecting getter {} for {} into {}", apiMethod.getMethod(), field.getPoolField(), targetClass.getPoolClass());
 				InjectGetter.inject(
 					targetClass,
 					apiMethod,

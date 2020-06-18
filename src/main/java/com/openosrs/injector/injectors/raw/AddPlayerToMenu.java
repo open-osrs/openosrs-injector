@@ -9,7 +9,7 @@
 package com.openosrs.injector.injectors.raw;
 
 import com.openosrs.injector.InjectUtil;
-import com.openosrs.injector.Injexception;
+import com.openosrs.injector.InjectException;
 import com.openosrs.injector.injection.InjectData;
 import com.openosrs.injector.injectors.AbstractInjector;
 import java.util.ArrayList;
@@ -43,7 +43,7 @@ public class AddPlayerToMenu extends AbstractInjector
 		super(inject);
 	}
 
-	public void inject() throws Injexception
+	public void inject() throws InjectException
 	{
 		final Method addPlayerOptions = InjectUtil.findMethod(inject, "addPlayerToMenu");
 		final net.runelite.asm.pool.Method shouldHideAttackOptionFor =
@@ -57,11 +57,9 @@ public class AddPlayerToMenu extends AbstractInjector
 			injectHideAttack(addPlayerOptions, shouldHideAttackOptionFor);
 			injectHideCast(addPlayerOptions, shouldHideAttackOptionFor);
 		}
-		catch (Injexception | AssertionError e)
+		catch (InjectException | AssertionError e)
 		{
-			log.warn(
-				"HidePlayerAttacks failed, but as this doesn't mess up anything other than that functionality, we're carrying on",
-				e);
+			log.warn("[WARN] HidePlayerAttacks failed, but as this doesn't mess up anything other than that functionality, we're carrying on", e);
 		}
 	}
 
@@ -93,7 +91,7 @@ public class AddPlayerToMenu extends AbstractInjector
 	}
 
 	private void injectHideAttack(Method addPlayerOptions, net.runelite.asm.pool.Method shouldHideAttackOptionFor)
-	throws Injexception
+	throws InjectException
 	{
 		final Field AttackOption_hidden =
 			InjectUtil.findField(inject, "AttackOption_hidden", "AttackOption").getPoolField();
@@ -139,7 +137,7 @@ public class AddPlayerToMenu extends AbstractInjector
 			i = iterator.next();
 			if (!(i instanceof ComparisonInstruction && i instanceof JumpingInstruction))
 			{
-				log.info("You're not supposed to see this lol");
+				log.info("[INFO] You're not supposed to see this lol");
 				continue;
 			}
 
@@ -160,7 +158,7 @@ public class AddPlayerToMenu extends AbstractInjector
 
 		if (injectIdx <= 0 || label == null && labelIns == null)
 		{
-			throw new Injexception("HidePlayerAttacks failed");
+			throw new InjectException("HidePlayerAttacks failed");
 		}
 
 		// Load the player
@@ -185,7 +183,7 @@ public class AddPlayerToMenu extends AbstractInjector
 	}
 
 	private void injectHideCast(Method addPlayerOptions, net.runelite.asm.pool.Method shouldHideAttackOptionFor)
-	throws Injexception
+	throws InjectException
 	{
 		// LABEL before
 		// BIPUSH 8
@@ -227,7 +225,7 @@ public class AddPlayerToMenu extends AbstractInjector
 				}
 				else
 				{
-					throw new Injexception("3 bipushes? fucking mental, Hide spells failed btw");
+					throw new InjectException("3 bipushes? fucking mental, Hide spells failed btw");
 				}
 
 				continue;
@@ -249,7 +247,7 @@ public class AddPlayerToMenu extends AbstractInjector
 			{
 				if (b1 && b2 && iAnd && getstatic)
 				{
-					throw new Injexception("@ me in discord if this shit is broken lol, hide spells failed btw");
+					throw new InjectException("@ me in discord if this shit is broken lol, hide spells failed btw");
 				}
 				continue;
 			}
@@ -266,7 +264,7 @@ public class AddPlayerToMenu extends AbstractInjector
 			}
 			else
 			{
-				throw new Injexception("@ me in discord if this shit is broken lol, hide spells failed btw");
+				throw new InjectException("@ me in discord if this shit is broken lol, hide spells failed btw");
 			}
 
 			// Load the player

@@ -50,7 +50,7 @@ public class InjectorValidator implements Validator
 		}
 
 		String status = wtf > 0 ? WTF : missing > 0 ? ERROR : OK;
-		log.info("RSApiValidator completed. Status [{}] {} overridden methods, {} missing", status, okay, missing);
+		log.info("[INFO] RSApiValidator completed. Status [{}] {} overridden methods, {} missing", status, okay, missing);
 
 		// valid, ref to static final field
 		return status == OK;
@@ -65,7 +65,7 @@ public class InjectorValidator implements Validator
 
 			if (clazz.findMethodDeep(apiMethod.getName(), apiMethod.getSignature()) == null)
 			{
-				log.warn("Class {} implements interface {} but doesn't implement {}",
+				log.warn("[WARN] Class {} implements interface {} but doesn't implement {}",
 					clazz.getPoolClass(), apiClass.getClazz(), apiMethod.getMethod());
 				++missing;
 			}
