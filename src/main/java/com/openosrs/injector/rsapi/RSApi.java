@@ -9,7 +9,7 @@ package com.openosrs.injector.rsapi;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
-import com.openosrs.injector.Injexception;
+import com.openosrs.injector.InjectException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -40,7 +40,7 @@ public class RSApi implements Iterable<RSApiClass>
 
 	private ImmutableMap<String, RSApiClass> map;
 
-	public RSApi(FileTree classes) throws Injexception
+	public RSApi(FileTree classes) throws InjectException
 	{
 		for (File file : classes)
 		{
@@ -62,7 +62,7 @@ public class RSApi implements Iterable<RSApiClass>
 			}
 			catch (IOException e)
 			{
-				throw new Injexception(e);
+				throw new InjectException(e);
 			}
 		}
 

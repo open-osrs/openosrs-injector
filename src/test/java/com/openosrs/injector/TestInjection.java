@@ -20,7 +20,7 @@ public class TestInjection extends InjectData
 	}
 
 	@Override
-	public void runChildInjector(Injector injector) throws Injexception
+	public void runChildInjector(Injector injector) throws InjectException
 	{
 		injector.inject();
 	}

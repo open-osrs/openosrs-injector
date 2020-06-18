@@ -8,7 +8,7 @@
 package com.openosrs.injector.injectors.raw;
 
 import com.openosrs.injector.InjectUtil;
-import com.openosrs.injector.Injexception;
+import com.openosrs.injector.InjectException;
 import com.openosrs.injector.injection.InjectData;
 import static com.openosrs.injector.injection.InjectData.HOOKS;
 import com.openosrs.injector.injectors.AbstractInjector;
@@ -36,7 +36,7 @@ public class RenderDraw extends AbstractInjector
 	}
 
 	@Override
-	public void inject() throws Injexception
+	public void inject() throws InjectException
 	{
 		int replaced = 0;
 
@@ -57,13 +57,13 @@ public class RenderDraw extends AbstractInjector
 				if (((InvokeVirtual) i).getMethod().equals(draw))
 				{
 					iterator.set(new InvokeStatic(ins, RENDERDRAW));
-					log.debug("Replaced method call at {}", i);
+					log.debug("[DEBUG] Replaced method call at {}", i);
 					++replaced;
 				}
 			}
 		}
 
 		if (replaced != EXPECTED)
-			throw new Injexception("Didn't replace the expected amount of method calls");
+			throw new InjectException("Didn't replace the expected amount of method calls");
 	}
 }

@@ -36,7 +36,7 @@ public class Injection extends InjectData implements InjectTaskHandler
 {
 	private static final Logger log = Logging.getLogger(Injection.class);
 
-	public Injection(File vanilla, File rsclient, File mixins, FileTree rsapi) throws Injexception, IOException
+	public Injection(File vanilla, File rsclient, File mixins, FileTree rsapi) throws InjectException, IOException
 	{
 		super(
 			JarUtil.loadJar(vanilla),
@@ -46,9 +46,9 @@ public class Injection extends InjectData implements InjectTaskHandler
 		);
 	}
 
-	public void inject() throws Injexception
+	public void inject() throws InjectException
 	{
-		log.debug("Starting injection");
+		log.debug("[DEBUG] Starting injection");
 
 		inject(new InterfaceInjector(this));
 
@@ -86,16 +86,16 @@ public class Injection extends InjectData implements InjectTaskHandler
 
 	public void save(File outputJar) throws IOException
 	{
-		log.info("Saving jar to {}", outputJar.toString());
+		log.info("[INFO] Saving jar to {}", outputJar.toString());
 
 		JarUtil.saveJar(this.getVanilla(), outputJar);
 	}
 
-	private void inject(Injector injector) throws Injexception
+	private void inject(Injector injector) throws InjectException
 	{
 		final String name = injector.getName();
 
-		log.info("Starting {}", name);
+		log.info("[INFO] Starting {}", name);
 
 		injector.start();
 
@@ -107,13 +107,13 @@ public class Injection extends InjectData implements InjectTaskHandler
 			validate((Validator) injector);
 	}
 
-	private void validate(Validator validator) throws Injexception
+	private void validate(Validator validator) throws InjectException
 	{
 		final String name = validator.getName();
 
 		if (!validator.validate())
 		{
-			throw new Injexception(name + " failed validation");
+			throw new InjectException(name + " failed validation");
 		}
 	}
 
@@ -121,14 +121,14 @@ public class Injection extends InjectData implements InjectTaskHandler
 	{
 		final String name = transformer.getName();
 
-		log.info("Starting {}", name);
+		log.info("[INFO] Starting {}", name);
 
 		transformer.transform();
 
 		log.lifecycle("{} {}", name, transformer.getCompletionMsg());
 	}
 
-	public void runChildInjector(Injector injector) throws Injexception
+	public void runChildInjector(Injector injector) throws InjectException
 	{
 		inject(injector);
 	}

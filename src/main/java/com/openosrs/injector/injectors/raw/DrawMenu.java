@@ -8,7 +8,7 @@
 package com.openosrs.injector.injectors.raw;
 
 import com.openosrs.injector.InjectUtil;
-import com.openosrs.injector.Injexception;
+import com.openosrs.injector.InjectException;
 import com.openosrs.injector.injection.InjectData;
 import static com.openosrs.injector.injection.InjectData.HOOKS;
 import com.openosrs.injector.injectors.AbstractInjector;
@@ -42,7 +42,7 @@ public class DrawMenu extends AbstractInjector
 		super(inject);
 	}
 
-	public void inject() throws Injexception
+	public void inject() throws InjectException
 	{
 		/*
 		 * The drawMenu method can be inlined, so we need this raw injector to find where to inject.
@@ -118,7 +118,7 @@ public class DrawMenu extends AbstractInjector
 		}
 
 		if (injectInvokeAfter == null || labelToJumpTo == null)
-			throw new Injexception("Couldn't find the right location for DrawMenu to inject");
+			throw new InjectException("Couldn't find the right location for DrawMenu to inject");
 
 		final Instructions instrs = mc.getMethod().getCode().getInstructions();
 		int idx = instrs.getInstructions().indexOf(injectInvokeAfter);
@@ -126,6 +126,6 @@ public class DrawMenu extends AbstractInjector
 		instrs.addInstruction(++idx, new InvokeStatic(instrs, DRAWMENU));
 		instrs.addInstruction(++idx, new IfNe(instrs, labelToJumpTo));
 
-		log.info("DrawMenu injected a method call at index {} in method {}. With a comparison jumping to {}", idx, drawLoggedIn, labelToJumpTo);
+		log.info("[INFO] DrawMenu injected a method call at index {} in method {}. With a comparison jumping to {}", idx, drawLoggedIn, labelToJumpTo);
 	}
 }

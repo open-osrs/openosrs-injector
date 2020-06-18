@@ -7,7 +7,7 @@
  */
 package com.openosrs.injector.injectors;
 
-import com.openosrs.injector.Injexception;
+import com.openosrs.injector.InjectException;
 import net.runelite.asm.Named;
 
 public interface Injector extends Named
@@ -15,7 +15,7 @@ public interface Injector extends Named
 	/**
 	 * Where all the injection should be done
 	 */
-	void inject() throws Injexception;
+	void inject() throws InjectException;
 
 	/**
 	 * Get a name the injector is going to be referred to in logging

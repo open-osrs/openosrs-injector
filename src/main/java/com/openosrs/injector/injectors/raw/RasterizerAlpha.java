@@ -9,7 +9,7 @@ package com.openosrs.injector.injectors.raw;
 
 import com.google.common.collect.Lists;
 import com.openosrs.injector.InjectUtil;
-import com.openosrs.injector.Injexception;
+import com.openosrs.injector.InjectException;
 import com.openosrs.injector.injection.InjectData;
 import com.openosrs.injector.injectors.AbstractInjector;
 import net.runelite.asm.ClassFile;
@@ -59,7 +59,7 @@ public class RasterizerAlpha extends AbstractInjector
 	/*
 	 * This class exists to allow transparency in overlays
 	 */
-	public void inject() throws Injexception
+	public void inject() throws InjectException
 	{
 		final Field r2dPx = InjectUtil.findField(inject, "Rasterizer2D_pixels", "Rasterizer2D");
 		final Method draw = InjectUtil.findMethod(inject, "drawLoggedIn", "Client");
@@ -187,17 +187,17 @@ public class RasterizerAlpha extends AbstractInjector
 			if (orCount != 0)
 			{
 				counts[0] += orCount;
-				log.info("Added {} OR's into {}", orCount, mc.getMethod());
+				log.info("[INFO] Added {} OR's into {}", orCount, mc.getMethod());
 			}
 			if (count != 0)
 			{
 				counts[1] += count;
-				log.info("Injected {} DrawAlpha invokes into {}", count, mc.getMethod());
+				log.info("[INFO] Injected {} DrawAlpha invokes into {}", count, mc.getMethod());
 			}
 		});
 
 		ex.run();
-		log.info("Injected {} DrawAlpha invokes and {} ors", counts[1], counts[0]);
+		log.info("[INFO] Injected {} DrawAlpha invokes and {} ors", counts[1], counts[0]);
 	}
 
 	private static boolean pushesToSameVar(InstructionContext cA, InstructionContext cB)

@@ -54,7 +54,7 @@ public interface InjectUtil
 	 * @param name The name of the method you want to find
 	 * @return The obfuscated version of the found method
 	 */
-	static Method findMethod(InjectData data, String name) throws Injexception
+	static Method findMethod(InjectData data, String name) throws InjectException
 	{
 		return findMethod(data, name, null, null);
 	}
@@ -74,7 +74,7 @@ public interface InjectUtil
 		String name,
 		String classHint,
 		@Nullable Predicate<Signature> sig)
-	throws Injexception
+	throws InjectException
 	{
 		return findMethod(data, name, classHint, sig, false, false);
 	}
@@ -85,13 +85,13 @@ public interface InjectUtil
 	 * @param data InjectData instance
 	 * @param name (Exported) method name
 	 * @param classHint The (exported) name of a class you expect (or know) the method to be in, or null, if you're not sure
-	 * @throws Injexception If the hint class couldn't be found, or no method matching the settings was found
+	 * @throws InjectException If the hint class couldn't be found, or no method matching the settings was found
 	 */
 	static Method findMethod(
 		InjectData data,
 		String name,
 		@Nullable String classHint)
-	throws Injexception
+	throws InjectException
 	{
 		return findMethod(data, name, classHint, null, false, false);
 	}
@@ -106,7 +106,7 @@ public interface InjectUtil
 	 * @param notStatic If this is true, only check non-static methods. If classHint isn't null, check only subclasses
 	 * @param returnDeob If this is true, this method will return the deobfuscated method, instead of turning it into vanilla first
 	 *
-	 * @throws Injexception If the hint class couldn't be found, or no method matching the settings was found
+	 * @throws InjectException If the hint class couldn't be found, or no method matching the settings was found
 	 */
 	static Method findMethod(
 		InjectData data,
@@ -115,7 +115,7 @@ public interface InjectUtil
 		@Nullable Predicate<Signature> sig,
 		boolean notStatic,
 		boolean returnDeob)
-	throws Injexception
+	throws InjectException
 	{
 		final ClassGroup deob = data.getDeobfuscated();
 		if (classHint != null)
@@ -144,14 +144,14 @@ public interface InjectUtil
 						if (sig == null || sig.test(m.getDescriptor()))
 							return returnDeob ? m : data.toVanilla(m);
 
-		throw new Injexception(String.format("Couldn't find %s", name));
+		throw new InjectException(String.format("Couldn't find %s", name));
 	}
 
-	static ClassFile findClassOrThrow(ClassGroup group, String name) throws Injexception
+	static ClassFile findClassOrThrow(ClassGroup group, String name) throws InjectException
 	{
 		ClassFile clazz = group.findClass(name);
 		if (clazz == null)
-			throw new Injexception("Hint class " + name + " doesn't exist");
+			throw new InjectException("Hint class " + name + " doesn't exist");
 
 		return clazz;
 	}
@@ -159,7 +159,7 @@ public interface InjectUtil
 	/**
 	 * Fail-fast implementation of ClassFile.findMethodDeep, using a predicate for signature
 	 */
-	static Method findMethodDeep(ClassFile clazz, String name, Predicate<Signature> type) throws Injexception
+	static Method findMethodDeep(ClassFile clazz, String name, Predicate<Signature> type) throws InjectException
 	{
 		do
 			for (Method method : clazz.getMethods())
@@ -168,7 +168,7 @@ public interface InjectUtil
 						return method;
 		while ((clazz = clazz.getParent()) != null);
 
-		throw new Injexception(String.format("Method %s couldn't be found", name + type.toString()));
+		throw new InjectException(String.format("Method %s couldn't be found", name + type.toString()));
 	}
 
 	/**
@@ -176,7 +176,7 @@ public interface InjectUtil
 	 *
 	 * well...
 	 */
-	static Field findStaticField(ClassGroup group, String name) throws Injexception
+	static Field findStaticField(ClassGroup group, String name) throws InjectException
 	{
 		for (ClassFile clazz : group)
 		{
@@ -185,7 +185,7 @@ public interface InjectUtil
 				return f;
 		}
 
-		throw new Injexception("Couldn't find static field " + name);
+		throw new InjectException("Couldn't find static field " + name);
 	}
 
 	/**
@@ -198,7 +198,7 @@ public interface InjectUtil
 	 *
 	 * @return The obfuscated version of the found field
 	 */
-	static Field findStaticField(InjectData data, String name, String classHint, Type type) throws Injexception
+	static Field findStaticField(InjectData data, String name, String classHint, Type type) throws InjectException
 	{
 		final ClassGroup deob = data.getDeobfuscated();
 		Field field;
@@ -227,13 +227,13 @@ public interface InjectUtil
 				return field;
 		}
 
-		throw new Injexception(String.format("Static field %s doesn't exist", (type != null ? type + " " : "") + name));
+		throw new InjectException(String.format("Static field %s doesn't exist", (type != null ? type + " " : "") + name));
 	}
 
 	/**
 	 * Fail-fast implementation of ClassGroup.findFieldDeep
 	 */
-	static Field findFieldDeep(ClassFile clazz, String name) throws Injexception
+	static Field findFieldDeep(ClassFile clazz, String name) throws InjectException
 	{
 		Field f;
 
@@ -242,16 +242,16 @@ public interface InjectUtil
 				return f;
 		while ((clazz = clazz.getParent()) != null);
 
-		throw new Injexception("Couldn't find field " + name);
+		throw new InjectException("Couldn't find field " + name);
 	}
 
-	static Field findField(InjectData data, String name, String hintClass) throws Injexception
+	static Field findField(InjectData data, String name, String hintClass) throws InjectException
 	{
 		final ClassGroup deob = data.getDeobfuscated();
 		return data.toVanilla(findField(deob, name, hintClass));
 	}
 
-	static Field findField(ClassGroup group, String name, String hintClass) throws Injexception
+	static Field findField(ClassGroup group, String name, String hintClass) throws InjectException
 	{
 		Field field;
 		if (hintClass != null)
@@ -267,7 +267,7 @@ public interface InjectUtil
 			if ((field = clazz.findField(name)) != null)
 				return field;
 
-		throw new Injexception("Field " + name + " doesn't exist");
+		throw new InjectException("Field " + name + " doesn't exist");
 	}
 
 	static ClassFile deobFromApiMethod(InjectData data, RSApiMethod apiMethod)

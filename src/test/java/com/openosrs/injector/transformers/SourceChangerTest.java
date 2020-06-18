@@ -7,7 +7,7 @@
  */
 package com.openosrs.injector.transformers;
 
-import com.openosrs.injector.Injexception;
+import com.openosrs.injector.InjectException;
 import com.openosrs.injector.injection.InjectData;
 import com.openosrs.injector.injectors.Injector;
 import com.openosrs.injector.transformers.srcchangeclasses.NewName;
@@ -37,7 +37,8 @@ public class SourceChangerTest
 
 		new SourceChanger(
 			new InjectData(new ClassGroup(), new ClassGroup(), null, null) {
-				public void runChildInjector(Injector injector) throws Injexception {}
+				public void runChildInjector(Injector injector) throws InjectException
+				{}
 
 				@Override
 				public void forEachPair(BiConsumer<ClassFile, ClassFile> consumer)
