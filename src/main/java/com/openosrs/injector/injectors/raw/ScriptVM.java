@@ -109,12 +109,12 @@ public class ScriptVM extends AbstractInjector
 		final Field scriptInstructions = InjectUtil.findField(inject, "opcodes", "Script");
 		final Field scriptStatePC = InjectUtil.findField(inject, "pc", "ScriptFrame");
 
-		// Next 4 should be injected by mixins, so don't need fail fast
+		// Next 5 should be injected by mixins, so don't need fail fast
 		final ClassFile vanillaClient = vanilla.findClass("client");
 
 		final Method runScript = vanillaClient.findStaticMethod("copy$runScript");
 		final Method vmExecuteOpcode = vanillaClient.findStaticMethod("vmExecuteOpcode");
-		final Field currentScriptField = vanillaClient.findField("currentScript");
+		final Method setCurrentScript = vanillaClient.findStaticMethod("setCurrentScript");
 		final Field currentScriptPCField = vanillaClient.findField("currentScriptPC");
 
 		Execution e = new Execution(inject.getVanilla());
@@ -242,7 +242,7 @@ public class ScriptVM extends AbstractInjector
 					{
 						instrIter.previous();
 						instrIter.add(new Dup(instrs));
-						instrIter.add(new PutStatic(instrs, currentScriptField));
+						instrIter.add(new InvokeStatic(instrs, setCurrentScript.getPoolMethod()));
 						instrIter.next();
 					}
 				}
