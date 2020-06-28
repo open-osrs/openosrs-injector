@@ -9,16 +9,16 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     id("java-gradle-plugin")
-    kotlin("jvm") version "1.3.50"
+    kotlin("jvm") version "1.3.72"
     `maven-publish`
     id("com.github.ben-manes.versions") version "0.28.0"
-    id("se.patrikerdes.use-latest-versions") version "0.2.13"
+    id("se.patrikerdes.use-latest-versions") version "0.2.14"
 }
 
-val oprsver = "3.3.1"
+val oprsver = "3.3.8"
 
 group = "com.openosrs"
-version = "1.1.2"
+version = "1.1.3"
 
 repositories {
     mavenCentral()
@@ -70,7 +70,7 @@ compileTestKotlin.kotlinOptions {
 }
 
 val sourcesJar by tasks.registering(Jar::class) {
-    classifier = "sources"
+    archiveClassifier.set("sources")
     from(sourceSets.main.get().allSource)
 }
 
