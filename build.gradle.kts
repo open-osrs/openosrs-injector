@@ -18,7 +18,7 @@ plugins {
 val oprsver = "3.3.1"
 
 group = "com.openosrs"
-version = "1.1.3"
+version = "1.1.4"
 
 repositories {
     mavenCentral()
@@ -26,6 +26,7 @@ repositories {
     maven {
         url = uri("https://repo.runelite.net")
         url = uri("https://raw.githubusercontent.com/open-osrs/hosting/master")
+        url = uri("https://repo.openosrs.com/repository/maven")
     }
 }
 
