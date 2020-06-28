@@ -15,7 +15,7 @@ plugins {
     id("se.patrikerdes.use-latest-versions") version "0.2.14"
 }
 
-val oprsver = "3.3.8"
+val oprsver = "3.3.1"
 
 group = "com.openosrs"
 version = "1.1.3"
