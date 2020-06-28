@@ -14,10 +14,10 @@ import com.openosrs.injector.injectors.Injector;
 import com.openosrs.injector.injectors.InterfaceInjector;
 import com.openosrs.injector.injectors.MixinInjector;
 import com.openosrs.injector.injectors.RSApiInjector;
+import com.openosrs.injector.injectors.raw.AddPlayerToMenu;
 import com.openosrs.injector.injectors.raw.ClearColorBuffer;
 import com.openosrs.injector.injectors.raw.DrawAfterWidgets;
 import com.openosrs.injector.injectors.raw.DrawMenu;
-import com.openosrs.injector.injectors.raw.AddPlayerToMenu;
 import com.openosrs.injector.injectors.raw.Occluder;
 import com.openosrs.injector.injectors.raw.RasterizerAlpha;
 import com.openosrs.injector.injectors.raw.RenderDraw;
@@ -36,7 +36,7 @@ public class Injection extends InjectData implements InjectTaskHandler
 {
 	private static final Logger log = Logging.getLogger(Injection.class);
 
-	public Injection(File vanilla, File rsclient, File mixins, FileTree rsapi) throws InjectException, IOException
+	public Injection(File vanilla, File rsclient, File mixins, FileTree rsapi) throws IOException
 	{
 		super(
 			JarUtil.loadJar(vanilla),
@@ -46,7 +46,7 @@ public class Injection extends InjectData implements InjectTaskHandler
 		);
 	}
 
-	public void inject() throws InjectException
+	public void inject()
 	{
 		log.debug("[DEBUG] Starting injection");
 
@@ -91,7 +91,7 @@ public class Injection extends InjectData implements InjectTaskHandler
 		JarUtil.saveJar(this.getVanilla(), outputJar);
 	}
 
-	private void inject(Injector injector) throws InjectException
+	private void inject(Injector injector)
 	{
 		final String name = injector.getName();
 
@@ -107,7 +107,7 @@ public class Injection extends InjectData implements InjectTaskHandler
 			validate((Validator) injector);
 	}
 
-	private void validate(Validator validator) throws InjectException
+	private void validate(Validator validator)
 	{
 		final String name = validator.getName();
 
@@ -128,7 +128,7 @@ public class Injection extends InjectData implements InjectTaskHandler
 		log.lifecycle("{} {}", name, transformer.getCompletionMsg());
 	}
 
-	public void runChildInjector(Injector injector) throws InjectException
+	public void runChildInjector(Injector injector)
 	{
 		inject(injector);
 	}

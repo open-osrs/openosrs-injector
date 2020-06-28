@@ -8,11 +8,11 @@
 package com.openosrs.injector.injectors;
 
 import com.openosrs.injector.injection.InjectData;
-import static com.openosrs.injector.rsapi.RSApi.API_BASE;
 import net.runelite.asm.ClassFile;
 import net.runelite.asm.Interfaces;
 import net.runelite.asm.pool.Class;
 import net.runelite.deob.DeobAnnotations;
+import static com.openosrs.injector.rsapi.RSApi.API_BASE;
 
 public class InterfaceInjector extends AbstractInjector
 {

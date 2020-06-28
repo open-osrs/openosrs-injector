@@ -8,8 +8,8 @@
  */
 package com.openosrs.injector.injectors.raw;
 
-import com.openosrs.injector.InjectUtil;
 import com.openosrs.injector.InjectException;
+import com.openosrs.injector.InjectUtil;
 import com.openosrs.injector.injection.InjectData;
 import com.openosrs.injector.injectors.AbstractInjector;
 import java.util.ArrayList;
@@ -43,7 +43,7 @@ public class AddPlayerToMenu extends AbstractInjector
 		super(inject);
 	}
 
-	public void inject() throws InjectException
+	public void inject()
 	{
 		final Method addPlayerOptions = InjectUtil.findMethod(inject, "addPlayerToMenu");
 		final net.runelite.asm.pool.Method shouldHideAttackOptionFor =
@@ -91,7 +91,6 @@ public class AddPlayerToMenu extends AbstractInjector
 	}
 
 	private void injectHideAttack(Method addPlayerOptions, net.runelite.asm.pool.Method shouldHideAttackOptionFor)
-	throws InjectException
 	{
 		final Field AttackOption_hidden =
 			InjectUtil.findField(inject, "AttackOption_hidden", "AttackOption").getPoolField();
@@ -183,7 +182,6 @@ public class AddPlayerToMenu extends AbstractInjector
 	}
 
 	private void injectHideCast(Method addPlayerOptions, net.runelite.asm.pool.Method shouldHideAttackOptionFor)
-	throws InjectException
 	{
 		// LABEL before
 		// BIPUSH 8

@@ -27,7 +27,7 @@ public class Occluder extends AbstractInjector
 		super(inject);
 	}
 
-	public void inject() throws InjectException
+	public void inject()
 	{
 		/*
 		 * This class the max view distance length, higher than this is useless though

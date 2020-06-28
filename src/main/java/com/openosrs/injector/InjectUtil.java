@@ -8,8 +8,6 @@
 package com.openosrs.injector;
 
 import com.openosrs.injector.injection.InjectData;
-import static com.openosrs.injector.rsapi.RSApi.*;
-import static com.openosrs.injector.rsapi.RSApi.API_BASE;
 import com.openosrs.injector.rsapi.RSApiClass;
 import com.openosrs.injector.rsapi.RSApiMethod;
 import java.util.List;
@@ -44,6 +42,8 @@ import net.runelite.asm.signature.Signature;
 import net.runelite.deob.DeobAnnotations;
 import net.runelite.deob.deobfuscators.arithmetic.DMath;
 import org.jetbrains.annotations.Nullable;
+import static com.openosrs.injector.rsapi.RSApi.API_BASE;
+import static com.openosrs.injector.rsapi.RSApi.RL_API_BASE;
 
 public interface InjectUtil
 {
@@ -54,7 +54,7 @@ public interface InjectUtil
 	 * @param name The name of the method you want to find
 	 * @return The obfuscated version of the found method
 	 */
-	static Method findMethod(InjectData data, String name) throws InjectException
+	static Method findMethod(InjectData data, String name)
 	{
 		return findMethod(data, name, null, null);
 	}
@@ -74,7 +74,6 @@ public interface InjectUtil
 		String name,
 		String classHint,
 		@Nullable Predicate<Signature> sig)
-	throws InjectException
 	{
 		return findMethod(data, name, classHint, sig, false, false);
 	}
@@ -147,7 +146,7 @@ public interface InjectUtil
 		throw new InjectException(String.format("Couldn't find %s", name));
 	}
 
-	static ClassFile findClassOrThrow(ClassGroup group, String name) throws InjectException
+	static ClassFile findClassOrThrow(ClassGroup group, String name)
 	{
 		ClassFile clazz = group.findClass(name);
 		if (clazz == null)
@@ -159,7 +158,7 @@ public interface InjectUtil
 	/**
 	 * Fail-fast implementation of ClassFile.findMethodDeep, using a predicate for signature
 	 */
-	static Method findMethodDeep(ClassFile clazz, String name, Predicate<Signature> type) throws InjectException
+	static Method findMethodDeep(ClassFile clazz, String name, Predicate<Signature> type)
 	{
 		do
 			for (Method method : clazz.getMethods())
@@ -176,7 +175,7 @@ public interface InjectUtil
 	 *
 	 * well...
 	 */
-	static Field findStaticField(ClassGroup group, String name) throws InjectException
+	static Field findStaticField(ClassGroup group, String name)
 	{
 		for (ClassFile clazz : group)
 		{
@@ -198,7 +197,7 @@ public interface InjectUtil
 	 *
 	 * @return The obfuscated version of the found field
 	 */
-	static Field findStaticField(InjectData data, String name, String classHint, Type type) throws InjectException
+	static Field findStaticField(InjectData data, String name, String classHint, Type type)
 	{
 		final ClassGroup deob = data.getDeobfuscated();
 		Field field;
@@ -233,7 +232,7 @@ public interface InjectUtil
 	/**
 	 * Fail-fast implementation of ClassGroup.findFieldDeep
 	 */
-	static Field findFieldDeep(ClassFile clazz, String name) throws InjectException
+	static Field findFieldDeep(ClassFile clazz, String name)
 	{
 		Field f;
 
@@ -245,13 +244,13 @@ public interface InjectUtil
 		throw new InjectException("Couldn't find field " + name);
 	}
 
-	static Field findField(InjectData data, String name, String hintClass) throws InjectException
+	static Field findField(InjectData data, String name, String hintClass)
 	{
 		final ClassGroup deob = data.getDeobfuscated();
 		return data.toVanilla(findField(deob, name, hintClass));
 	}
 
-	static Field findField(ClassGroup group, String name, String hintClass) throws InjectException
+	static Field findField(ClassGroup group, String name, String hintClass)
 	{
 		Field field;
 		if (hintClass != null)

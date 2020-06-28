@@ -7,10 +7,9 @@
  */
 package com.openosrs.injector.injectors.raw;
 
-import com.openosrs.injector.InjectUtil;
 import com.openosrs.injector.InjectException;
+import com.openosrs.injector.InjectUtil;
 import com.openosrs.injector.injection.InjectData;
-import static com.openosrs.injector.injection.InjectData.HOOKS;
 import com.openosrs.injector.injectors.AbstractInjector;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -28,6 +27,7 @@ import net.runelite.asm.execution.MethodContext;
 import net.runelite.asm.pool.Class;
 import net.runelite.asm.pool.Field;
 import net.runelite.asm.signature.Signature;
+import static com.openosrs.injector.injection.InjectData.HOOKS;
 
 public class DrawMenu extends AbstractInjector
 {
@@ -42,7 +42,7 @@ public class DrawMenu extends AbstractInjector
 		super(inject);
 	}
 
-	public void inject() throws InjectException
+	public void inject()
 	{
 		/*
 		 * The drawMenu method can be inlined, so we need this raw injector to find where to inject.

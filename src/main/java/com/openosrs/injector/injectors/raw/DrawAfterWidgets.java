@@ -30,10 +30,9 @@
  */
 package com.openosrs.injector.injectors.raw;
 
-import com.openosrs.injector.InjectUtil;
 import com.openosrs.injector.InjectException;
+import com.openosrs.injector.InjectUtil;
 import com.openosrs.injector.injection.InjectData;
-import static com.openosrs.injector.injection.InjectData.HOOKS;
 import com.openosrs.injector.injectors.AbstractInjector;
 import java.util.HashSet;
 import java.util.ListIterator;
@@ -49,6 +48,7 @@ import net.runelite.asm.attributes.code.instructions.GetStatic;
 import net.runelite.asm.attributes.code.instructions.IMul;
 import net.runelite.asm.attributes.code.instructions.InvokeStatic;
 import net.runelite.asm.signature.Signature;
+import static com.openosrs.injector.injection.InjectData.HOOKS;
 
 public class DrawAfterWidgets extends AbstractInjector
 {
@@ -57,7 +57,7 @@ public class DrawAfterWidgets extends AbstractInjector
 		super(inject);
 	}
 
-	public void inject() throws InjectException
+	public void inject()
 	{
 		/*
 		 * This call has to be injected using raw injection because the

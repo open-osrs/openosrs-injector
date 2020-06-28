@@ -30,13 +30,12 @@
  */
 package com.openosrs.injector.injectors;
 
-import com.openosrs.injector.InjectUtil;
 import com.openosrs.injector.InjectException;
+import com.openosrs.injector.InjectUtil;
 import com.openosrs.injector.injection.InjectData;
 import com.openosrs.injector.injectors.rsapi.InjectGetter;
 import com.openosrs.injector.injectors.rsapi.InjectInvoke;
 import com.openosrs.injector.injectors.rsapi.InjectSetter;
-import static com.openosrs.injector.rsapi.RSApi.*;
 import com.openosrs.injector.rsapi.RSApiClass;
 import com.openosrs.injector.rsapi.RSApiMethod;
 import java.util.ArrayList;
@@ -51,6 +50,7 @@ import net.runelite.asm.Method;
 import net.runelite.asm.Type;
 import net.runelite.asm.signature.Signature;
 import net.runelite.deob.DeobAnnotations;
+import static com.openosrs.injector.rsapi.RSApi.API_BASE;
 
 public class RSApiInjector extends AbstractInjector
 {
@@ -62,7 +62,7 @@ public class RSApiInjector extends AbstractInjector
 		super(inject);
 	}
 
-	public void inject() throws InjectException
+	public void inject()
 	{
 		for (final ClassFile deobClass : inject.getDeobfuscated())
 		{
@@ -77,7 +77,7 @@ public class RSApiInjector extends AbstractInjector
 		log.info("[INFO] Injected {} getters, {} setters, and {} invokers", get, set, voke);
 	}
 
-	private void injectFields(ClassFile deobClass, RSApiClass implementingClass) throws InjectException
+	private void injectFields(ClassFile deobClass, RSApiClass implementingClass)
 	{
 		for (Field deobField : deobClass.getFields())
 		{
@@ -159,7 +159,7 @@ public class RSApiInjector extends AbstractInjector
 		}
 	}
 
-	private void injectMethods(ClassFile deobClass, RSApiClass implementingClass) throws InjectException
+	private void injectMethods(ClassFile deobClass, RSApiClass implementingClass)
 	{
 		for (Method deobMethod : deobClass.getMethods())
 		{
@@ -215,7 +215,7 @@ public class RSApiInjector extends AbstractInjector
 		}
 	}
 
-	private void retryFailures() throws InjectException
+	private void retryFailures()
 	{
 		for (Map.Entry<Field, List<RSApiMethod>> entry : retryFields.entrySet())
 		{
@@ -257,7 +257,7 @@ public class RSApiInjector extends AbstractInjector
 		return matching;
 	}
 
-	private void inject(List<RSApiMethod> matched, Field field, Field targetField, Number getter) throws InjectException
+	private void inject(List<RSApiMethod> matched, Field field, Field targetField, Number getter)
 	{
 		for (RSApiMethod apiMethod : matched)
 		{

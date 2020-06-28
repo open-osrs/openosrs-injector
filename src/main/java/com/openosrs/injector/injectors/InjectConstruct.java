@@ -30,11 +30,10 @@
  */
 package com.openosrs.injector.injectors;
 
-import com.openosrs.injector.InjectUtil;
 import com.openosrs.injector.InjectException;
+import com.openosrs.injector.InjectUtil;
 import com.openosrs.injector.injection.InjectData;
 import com.openosrs.injector.rsapi.RSApiMethod;
-import static com.openosrs.injector.rsapi.RSApi.CONSTRUCT;
 import java.util.List;
 import java.util.stream.Collectors;
 import net.runelite.asm.ClassFile;
@@ -51,6 +50,7 @@ import net.runelite.asm.attributes.code.instructions.Return;
 import net.runelite.asm.pool.Class;
 import net.runelite.asm.pool.Method;
 import net.runelite.asm.signature.Signature;
+import static com.openosrs.injector.rsapi.RSApi.CONSTRUCT;
 import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
 
 public class InjectConstruct extends AbstractInjector
@@ -63,7 +63,7 @@ public class InjectConstruct extends AbstractInjector
 	}
 
 	@Override
-	public void inject() throws InjectException
+	public void inject()
 	{
 		for (RSApiMethod apiMethod : inject.getRsApi().getConstructs())
 		{
@@ -84,7 +84,7 @@ public class InjectConstruct extends AbstractInjector
 		log.info("[INFO] Injected {} constructors", injected);
 	}
 
-	private void injectConstruct(ClassFile targetClass, Method apiMethod) throws InjectException
+	private void injectConstruct(ClassFile targetClass, Method apiMethod)
 	{
 		log.debug("[DEBUG] Injecting constructor for {} into {}", apiMethod, targetClass.getPoolClass());
 

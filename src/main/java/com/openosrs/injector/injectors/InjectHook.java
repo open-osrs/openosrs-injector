@@ -30,8 +30,8 @@
 package com.openosrs.injector.injectors;
 
 import com.google.common.collect.Lists;
-import com.openosrs.injector.InjectUtil;
 import com.openosrs.injector.InjectException;
+import com.openosrs.injector.InjectUtil;
 import com.openosrs.injector.injection.InjectData;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -83,7 +83,7 @@ public class InjectHook extends AbstractInjector
 	}
 
 	@Override
-	public void inject() throws InjectException
+	public void inject()
 	{
 		for (Map.Entry<Provider<ClassFile>, List<ClassFile>> entry : mixinTargets.entrySet())
 			injectMethods(entry.getKey(), entry.getValue());
@@ -93,7 +93,7 @@ public class InjectHook extends AbstractInjector
 		log.info("[INFO] Injected {} field hooks.", injectedHooks);
 	}
 
-	private void injectMethods(Provider<ClassFile> mixinProvider, List<ClassFile> targetClasses) throws InjectException
+	private void injectMethods(Provider<ClassFile> mixinProvider, List<ClassFile> targetClasses)
 	{
 		final ClassFile mixinClass = mixinProvider.get();
 
@@ -259,8 +259,7 @@ public class InjectHook extends AbstractInjector
 		e.run();
 	}
 
-	private void injectCallbackBefore(Instructions ins, int idx, HookInfo hookInfo, StackContext index, StackContext object, StackContext value) throws
-																																				 InjectException
+	private void injectCallbackBefore(Instructions ins, int idx, HookInfo hookInfo, StackContext index, StackContext object, StackContext value)
 	{
 		Signature signature = hookInfo.method.getDescriptor();
 		Type methodArgumentType = signature.getTypeOfArg(0);
@@ -322,8 +321,7 @@ public class InjectHook extends AbstractInjector
 		return idx;
 	}
 
-	private void injectCallback(Instructions ins, int idx, HookInfo hookInfo, StackContext index, StackContext objectPusher) throws
-																															 InjectException
+	private void injectCallback(Instructions ins, int idx, HookInfo hookInfo, StackContext index, StackContext objectPusher)
 	{
 		if (!hookInfo.method.isStatic())
 		{

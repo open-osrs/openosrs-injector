@@ -30,8 +30,8 @@
  */
 package com.openosrs.injector.injectors.rsapi;
 
-import com.openosrs.injector.InjectUtil;
 import com.openosrs.injector.InjectException;
+import com.openosrs.injector.InjectUtil;
 import com.openosrs.injector.rsapi.RSApiMethod;
 import java.util.List;
 import net.runelite.asm.ClassFile;
@@ -51,8 +51,7 @@ import net.runelite.asm.signature.Signature;
 
 public class InjectInvoke
 {
-	public static void inject(ClassFile targetClass, RSApiMethod apiMethod, Method vanillaMethod, String garbage) throws
-																												  InjectException
+	public static void inject(ClassFile targetClass, RSApiMethod apiMethod, Method vanillaMethod, String garbage)
 	{
 		if (targetClass.findMethod(apiMethod.getName(), apiMethod.getSignature()) != null)
 		{

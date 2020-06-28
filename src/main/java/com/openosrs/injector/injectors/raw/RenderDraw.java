@@ -7,10 +7,9 @@
  */
 package com.openosrs.injector.injectors.raw;
 
-import com.openosrs.injector.InjectUtil;
 import com.openosrs.injector.InjectException;
+import com.openosrs.injector.InjectUtil;
 import com.openosrs.injector.injection.InjectData;
-import static com.openosrs.injector.injection.InjectData.HOOKS;
 import com.openosrs.injector.injectors.AbstractInjector;
 import java.util.ListIterator;
 import net.runelite.asm.Method;
@@ -20,6 +19,7 @@ import net.runelite.asm.attributes.code.instructions.InvokeStatic;
 import net.runelite.asm.attributes.code.instructions.InvokeVirtual;
 import net.runelite.asm.pool.Class;
 import net.runelite.asm.signature.Signature;
+import static com.openosrs.injector.injection.InjectData.HOOKS;
 
 public class RenderDraw extends AbstractInjector
 {
@@ -36,7 +36,7 @@ public class RenderDraw extends AbstractInjector
 	}
 
 	@Override
-	public void inject() throws InjectException
+	public void inject()
 	{
 		int replaced = 0;
 

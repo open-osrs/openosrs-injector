@@ -7,7 +7,6 @@
  */
 package com.openosrs.injector.injection;
 
-import com.openosrs.injector.InjectException;
 import java.io.File;
 import java.io.IOException;
 
@@ -19,7 +18,7 @@ public interface InjectTaskHandler
 	/**
 	 * The actual method that does all the work
 	 */
-	void inject() throws InjectException;
+	void inject();
 
 	/**
 	 * Call this to save the injected jar to outputJar

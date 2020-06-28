@@ -9,7 +9,6 @@ package com.openosrs.injector.injectors.raw;
 
 import com.google.common.collect.Lists;
 import com.openosrs.injector.InjectUtil;
-import com.openosrs.injector.InjectException;
 import com.openosrs.injector.injection.InjectData;
 import com.openosrs.injector.injectors.AbstractInjector;
 import net.runelite.asm.ClassFile;
@@ -59,7 +58,7 @@ public class RasterizerAlpha extends AbstractInjector
 	/*
 	 * This class exists to allow transparency in overlays
 	 */
-	public void inject() throws InjectException
+	public void inject()
 	{
 		final Field r2dPx = InjectUtil.findField(inject, "Rasterizer2D_pixels", "Rasterizer2D");
 		final Method draw = InjectUtil.findMethod(inject, "drawLoggedIn", "Client");

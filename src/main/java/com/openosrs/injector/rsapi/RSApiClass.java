@@ -7,8 +7,6 @@
  */
 package com.openosrs.injector.rsapi;
 
-import static com.openosrs.injector.rsapi.RSApi.CONSTRUCT;
-import static com.openosrs.injector.rsapi.RSApi.IMPORT;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -21,6 +19,8 @@ import net.runelite.asm.pool.Class;
 import net.runelite.asm.pool.Method;
 import net.runelite.asm.signature.Signature;
 import org.jetbrains.annotations.NotNull;
+import static com.openosrs.injector.rsapi.RSApi.CONSTRUCT;
+import static com.openosrs.injector.rsapi.RSApi.IMPORT;
 
 @Data
 public class RSApiClass implements Iterable<RSApiMethod>

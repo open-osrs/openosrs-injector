@@ -33,8 +33,8 @@ package com.openosrs.injector.injectors;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.openosrs.injector.InjectUtil;
 import com.openosrs.injector.InjectException;
+import com.openosrs.injector.InjectUtil;
 import com.openosrs.injector.injection.InjectData;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -96,14 +96,14 @@ public class MixinInjector extends AbstractInjector
 	}
 
 	@Override
-	public void inject() throws InjectException
+	public void inject()
 	{
 		final Map<Provider<ClassFile>, List<ClassFile>> mixinTargets = initTargets();
 		inject(mixinTargets);
 	}
 
 	@VisibleForTesting
-	void inject(Map<Provider<ClassFile>, List<ClassFile>> mixinTargets) throws InjectException
+	void inject(Map<Provider<ClassFile>, List<ClassFile>> mixinTargets)
 	{
 		for (Map.Entry<Provider<ClassFile>, List<ClassFile>> entry : mixinTargets.entrySet())
 		{
@@ -184,7 +184,7 @@ public class MixinInjector extends AbstractInjector
 		return builder.build();
 	}
 
-	private void injectFields(Provider<ClassFile> mixinProvider, List<ClassFile> targetClasses) throws InjectException
+	private void injectFields(Provider<ClassFile> mixinProvider, List<ClassFile> targetClasses)
 	{
 		final ClassFile mixinClass = mixinProvider.get();
 
@@ -218,7 +218,7 @@ public class MixinInjector extends AbstractInjector
 		}
 	}
 
-	private void findShadowFields(Provider<ClassFile> mixinProvider) throws InjectException
+	private void findShadowFields(Provider<ClassFile> mixinProvider)
 	{
 		final ClassFile mixinClass = mixinProvider.get();
 
@@ -255,7 +255,7 @@ public class MixinInjector extends AbstractInjector
 		}
 	}
 
-	private void injectMethods(Provider<ClassFile> mixinProvider, List<ClassFile> targetClasses) throws InjectException
+	private void injectMethods(Provider<ClassFile> mixinProvider, List<ClassFile> targetClasses)
 	{
 		for (ClassFile targetClass : targetClasses)
 		{
@@ -531,8 +531,7 @@ public class MixinInjector extends AbstractInjector
 		targetMethod.setCode(newCode);
 	}
 
-	private void setOwnersToTargetClass(ClassFile mixinCf, ClassFile cf, Method method, Map<net.runelite.asm.pool.Method, CopiedMethod> copiedMethods) throws
-																																					   InjectException
+	private void setOwnersToTargetClass(ClassFile mixinCf, ClassFile cf, Method method, Map<net.runelite.asm.pool.Method, CopiedMethod> copiedMethods)
 	{
 		ListIterator<Instruction> iterator = method.getCode().getInstructions().listIterator();
 
@@ -629,7 +628,7 @@ public class MixinInjector extends AbstractInjector
 		}
 	}
 
-	private void verify(ClassFile mixinCf, Instruction i) throws InjectException
+	private void verify(ClassFile mixinCf, Instruction i)
 	{
 		if (i instanceof FieldInstruction)
 		{
@@ -659,7 +658,7 @@ public class MixinInjector extends AbstractInjector
 			throw new InjectException("Injected bytecode must be Java 6 compatible");
 	}
 
-	private Method findDeobMatching(ClassFile deobClass, Method mixinMethod, String deobName) throws InjectException
+	private Method findDeobMatching(ClassFile deobClass, Method mixinMethod, String deobName)
 	{
 		List<Method> matching = new ArrayList<>();
 

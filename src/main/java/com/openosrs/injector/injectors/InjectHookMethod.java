@@ -30,8 +30,8 @@
  */
 package com.openosrs.injector.injectors;
 
-import com.openosrs.injector.InjectUtil;
 import com.openosrs.injector.InjectException;
+import com.openosrs.injector.InjectUtil;
 import com.openosrs.injector.injection.InjectData;
 import java.util.List;
 import java.util.ListIterator;
@@ -62,7 +62,7 @@ public class InjectHookMethod extends AbstractInjector
 	}
 
 	@Override
-	public void inject() throws InjectException
+	public void inject()
 	{
 		for (Map.Entry<Provider<ClassFile>, List<ClassFile>> entry : mixinTargets.entrySet())
 			injectMethods(entry.getKey(), entry.getValue());
@@ -70,7 +70,7 @@ public class InjectHookMethod extends AbstractInjector
 		log.info("[INFO] Injected {} method hooks", injected);
 	}
 
-	private void injectMethods(Provider<ClassFile> mixinProvider, List<ClassFile> targetClasses) throws InjectException
+	private void injectMethods(Provider<ClassFile> mixinProvider, List<ClassFile> targetClasses)
 	{
 		final ClassFile mixinClass = mixinProvider.get();
 
