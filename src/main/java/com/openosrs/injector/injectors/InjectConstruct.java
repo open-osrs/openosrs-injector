@@ -36,10 +36,10 @@ import com.openosrs.injector.injection.InjectData;
 import com.openosrs.injector.rsapi.RSApiMethod;
 import java.util.List;
 import java.util.stream.Collectors;
+import net.runelite.asm.Annotation;
 import net.runelite.asm.ClassFile;
 import net.runelite.asm.Type;
 import net.runelite.asm.attributes.Code;
-import net.runelite.asm.attributes.annotation.Annotation;
 import net.runelite.asm.attributes.code.Instruction;
 import net.runelite.asm.attributes.code.Instructions;
 import net.runelite.asm.attributes.code.instructions.CheckCast;
@@ -67,7 +67,7 @@ public class InjectConstruct extends AbstractInjector
 	{
 		for (RSApiMethod apiMethod : inject.getRsApi().getConstructs())
 		{
-			Annotation construct = apiMethod.getAnnotations().find(CONSTRUCT);
+			Annotation construct = apiMethod.findAnnotation(CONSTRUCT);
 			if (construct == null)
 				continue;
 

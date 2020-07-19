@@ -53,10 +53,7 @@ public class RSApi implements Iterable<RSApiClass>
 
 				final RSApiClass apiClass = new RSApiClass();
 
-				reader.accept(
-					new RSApiClassVisitor(apiClass),
-					ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES
-				);
+				reader.accept(apiClass, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
 
 				this.classes.add(apiClass);
 			}

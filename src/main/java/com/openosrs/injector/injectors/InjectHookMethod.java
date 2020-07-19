@@ -37,10 +37,10 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import javax.inject.Provider;
+import net.runelite.asm.Annotation;
 import net.runelite.asm.ClassFile;
 import net.runelite.asm.Method;
 import net.runelite.asm.Type;
-import net.runelite.asm.attributes.annotation.Annotation;
 import net.runelite.asm.attributes.code.Instruction;
 import net.runelite.asm.attributes.code.Instructions;
 import net.runelite.asm.attributes.code.instruction.types.ReturnInstruction;
@@ -78,15 +78,15 @@ public class InjectHookMethod extends AbstractInjector
 		{
 			for (Method mixinMethod : mixinClass.getMethods())
 			{
-				final Annotation methodHook = mixinMethod.getAnnotations().find(METHODHOOK);
+				final Annotation methodHook = mixinMethod.findAnnotation(METHODHOOK);
 				if (methodHook == null)
 					continue;
 
 				if (!mixinMethod.getDescriptor().isVoid())
 					throw new InjectException("Method hook " + mixinMethod.getPoolMethod() + " doesn't have void return type");
 
-				final String hookName = methodHook.getElement().getString();
-				final boolean end = methodHook.getElements().size() == 2 && methodHook.getElements().get(1).getValue().equals(true);
+				final String hookName = methodHook.getValueString();
+				final boolean end = isEnd(methodHook);
 
 				final ClassFile deobTarget = inject.toDeob(targetClass.getName());
 				final Signature deobSig = InjectUtil.apiToDeob(inject, mixinMethod.getDescriptor());
@@ -163,5 +163,11 @@ public class InjectHookMethod extends AbstractInjector
 				method.isStatic()
 			)
 		);
+	}
+
+	private static boolean isEnd(Annotation annotation)
+	{
+		Object val = annotation.get("end");
+		return val instanceof Boolean && (Boolean) val;
 	}
 }
