@@ -7,24 +7,38 @@
  */
 package com.openosrs.injector.rsapi;
 
+import java.util.HashMap;
+import java.util.Map;
 import lombok.Data;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import net.runelite.asm.Annotated;
+import lombok.Setter;
+import net.runelite.asm.Annotation;
 import net.runelite.asm.Named;
-import net.runelite.asm.attributes.Annotations;
+import net.runelite.asm.Type;
+import net.runelite.asm.attributes.Annotated;
 import net.runelite.asm.pool.Class;
 import net.runelite.asm.pool.Method;
 import net.runelite.asm.signature.Signature;
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-@Data
-@RequiredArgsConstructor
-public class RSApiMethod implements Annotated, Named
+@Getter
+@Setter
+public class RSApiMethod extends MethodVisitor implements Annotated, Named
 {
 	private final Method method;
 	private final int accessFlags;
-	private final Annotations annotations = new Annotations();
+	private final Map<Type, Annotation> annotations = new HashMap<>();
 	private boolean injected;
+
+	RSApiMethod(Method method, int accesFlags)
+	{
+		super(Opcodes.ASM5);
+		this.method = method;
+		this.accessFlags = accesFlags;
+	}
 
 	public Class getClazz()
 	{
@@ -49,5 +63,12 @@ public class RSApiMethod implements Annotated, Named
 	public boolean isDefault()
 	{
 		return (accessFlags & (Opcodes.ACC_ABSTRACT | Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC)) == 1;
+	}
+
+	public AnnotationVisitor visitAnnotation(String descriptor, boolean visible)
+	{
+		final var annotation = new Annotation(new Type(descriptor), visible);
+		this.addAnnotation(annotation);
+		return annotation;
 	}
 }

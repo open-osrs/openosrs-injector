@@ -14,14 +14,14 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import net.runelite.asm.Annotated;
+import net.runelite.asm.Annotation;
 import net.runelite.asm.ClassFile;
 import net.runelite.asm.ClassGroup;
 import net.runelite.asm.Field;
 import net.runelite.asm.Method;
 import net.runelite.asm.Named;
 import net.runelite.asm.Type;
-import net.runelite.asm.attributes.annotation.Annotation;
+import net.runelite.asm.attributes.Annotated;
 import net.runelite.asm.attributes.code.Instruction;
 import net.runelite.asm.attributes.code.InstructionType;
 import net.runelite.asm.attributes.code.Instructions;
@@ -368,8 +368,8 @@ public interface InjectUtil
 	 */
 	static <T extends Annotated & Named> String getObfuscatedName(T from)
 	{
-		Annotation name = from.getAnnotations().find(DeobAnnotations.OBFUSCATED_NAME);
-		return name == null ? from.getName() : name.getElement().getString();
+		Annotation name = from.findAnnotation(DeobAnnotations.OBFUSCATED_NAME);
+		return name == null ? from.getName() : name.getValueString();
 	}
 
 	/**
@@ -377,8 +377,8 @@ public interface InjectUtil
 	 */
 	static String getExportedName(Annotated from)
 	{
-		Annotation export = from.getAnnotations().find(DeobAnnotations.EXPORT);
-		return export == null ? null : export.getElement().getString();
+		Annotation export = from.findAnnotation(DeobAnnotations.EXPORT);
+		return export == null ? null : export.getValueString();
 	}
 
 	/**
@@ -450,7 +450,7 @@ public interface InjectUtil
 	 */
 	static ClassFile getVanillaClassFromAnnotationString(InjectData data, Annotation annotation)
 	{
-		Object v = annotation.getElement().getValue();
+		Object v = annotation.getValue();
 		String str = ((org.objectweb.asm.Type) v).getInternalName();
 		return data.toVanilla(data.toDeob(str));
 	}

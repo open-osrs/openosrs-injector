@@ -40,12 +40,12 @@ import java.util.Map;
 import java.util.Set;
 import javax.inject.Provider;
 import lombok.AllArgsConstructor;
+import net.runelite.asm.Annotation;
 import net.runelite.asm.ClassFile;
 import net.runelite.asm.Field;
 import net.runelite.asm.Method;
 import net.runelite.asm.Type;
 import net.runelite.asm.attributes.Code;
-import net.runelite.asm.attributes.annotation.Annotation;
 import net.runelite.asm.attributes.code.Instruction;
 import net.runelite.asm.attributes.code.InstructionType;
 import net.runelite.asm.attributes.code.Instructions;
@@ -101,14 +101,12 @@ public class InjectHook extends AbstractInjector
 		{
 			for (Method mixinMethod : mixinClass.getMethods())
 			{
-				final Annotation fieldHook = mixinMethod.getAnnotations().find(FIELDHOOK);
+				final Annotation fieldHook = mixinMethod.findAnnotation(FIELDHOOK);
 				if (fieldHook == null)
-				{
 					continue;
-				}
 
-				final String hookName = fieldHook.getElement().getString();
-				final boolean before = fieldHook.getElements().size() == 2 && fieldHook.getElements().get(1).getValue().equals(true);
+				final String hookName = fieldHook.getValueString();
+				final boolean before = isBefore(fieldHook);
 
 				final ClassFile deobTarget = inject.toDeob(targetClass.getName());
 				final Field deobField;
@@ -360,5 +358,11 @@ public class InjectHook extends AbstractInjector
 				method.isStatic()
 			);
 		}
+	}
+
+	private static boolean isBefore(Annotation a)
+	{
+		Object val = a.get("before");
+		return val instanceof Boolean && (Boolean) val;
 	}
 }

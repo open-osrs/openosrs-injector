@@ -70,7 +70,7 @@ class DeobTarget
 
 	@ObfuscatedName("ob_foo3")
 	@ObfuscatedSignature(
-		signature = "(I)V",
+		descriptor = "(I)V",
 		garbageValue = "123"
 	)
 	private void foo3()
@@ -108,14 +108,12 @@ abstract class Source
 	}
 
 	@Copy("foo3")
-	abstract void foo3();
-
 	@Replace("foo3")
-	private void rl$foo3()
+	private void copy$foo3()
 	{
 		System.out.println("replaced");
 		System.out.println(foo4);
-		foo3();
+		copy$foo3();
 	}
 }
 

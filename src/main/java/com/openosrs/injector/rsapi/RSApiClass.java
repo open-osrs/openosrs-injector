@@ -12,18 +12,22 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import lombok.Data;
-import net.runelite.asm.attributes.Annotations;
-import net.runelite.asm.attributes.annotation.Annotation;
+import lombok.Getter;
+import lombok.Setter;
+import net.runelite.asm.Annotation;
 import net.runelite.asm.pool.Class;
 import net.runelite.asm.pool.Method;
 import net.runelite.asm.signature.Signature;
 import org.jetbrains.annotations.NotNull;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 import static com.openosrs.injector.rsapi.RSApi.CONSTRUCT;
 import static com.openosrs.injector.rsapi.RSApi.IMPORT;
 
-@Data
-public class RSApiClass implements Iterable<RSApiMethod>
+@Getter
+@Setter
+public class RSApiClass extends ClassVisitor implements Iterable<RSApiMethod>
 {
 	private Class clazz;
 	private final List<Class> interfaces = new ArrayList<>();
@@ -32,6 +36,11 @@ public class RSApiClass implements Iterable<RSApiMethod>
 
 	private final Map<String, List<RSApiMethod>> imports = new HashMap<>();
 
+	RSApiClass()
+	{
+		super(Opcodes.ASM5);
+	}
+
 	void init(List<RSApiMethod> constructList)
 	{
 		for (RSApiMethod method : this)
@@ -39,23 +48,18 @@ public class RSApiClass implements Iterable<RSApiMethod>
 			if (method.isSynthetic())
 				continue;
 
-			final Annotations annotations = method.getAnnotations();
-			if (annotations.find(CONSTRUCT) != null)
+			if (method.findAnnotation(CONSTRUCT) != null)
 			{
 				constructList.add(method);
 				continue;
 			}
 
-			final Annotation imported = annotations.find(IMPORT);
+			final Annotation imported = method.findAnnotation(IMPORT);
 			if (imported != null)
-			{
-				final String importStr = imported.getElement().getString();
-
 				imports.computeIfAbsent(
-					importStr,
+					imported.getValueString(),
 					(str) -> new ArrayList<>()
 				).add(method);
-			}
 		}
 	}
 
@@ -84,5 +88,18 @@ public class RSApiClass implements Iterable<RSApiMethod>
 	public Iterator<RSApiMethod> iterator()
 	{
 		return this.methods.iterator();
+	}
+
+	public void visit(int version, int access, String name, String signature, String superName, String[] interfaces)
+	{
+		clazz = new Class(name);
+
+		for (String s : interfaces)
+			this.interfaces.add(new Class(s));
+	}
+
+	public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions)
+	{
+		return addMethod(name, new Signature(desc), access);
 	}
 }
