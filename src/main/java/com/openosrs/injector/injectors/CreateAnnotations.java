@@ -53,6 +53,11 @@ public class CreateAnnotations extends AbstractInjector
         {
             injectFields(deobClass);
             injectMethods(deobClass);
+
+            if (deobClass.getName().startsWith("class"))
+                continue;
+
+            deobClass.addAnnotation(DeobAnnotations.IMPLEMENTS, deobClass.getName());
         }
     }
 
