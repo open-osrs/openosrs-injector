@@ -9,7 +9,6 @@ package com.openosrs.injector;
 
 import com.openosrs.injector.injection.InjectData;
 import com.openosrs.injector.injection.InjectTaskHandler;
-import com.openosrs.injector.injectors.CreateAnnotations;
 import com.openosrs.injector.injectors.InjectConstruct;
 import com.openosrs.injector.injectors.Injector;
 import com.openosrs.injector.injectors.InterfaceInjector;
@@ -50,8 +49,6 @@ public class Injection extends InjectData implements InjectTaskHandler
 	public void inject()
 	{
 		log.debug("[DEBUG] Starting injection");
-
-		inject(new CreateAnnotations(this));
 
 		inject(new InterfaceInjector(this));
 
