@@ -3,11 +3,10 @@
  * All rights reserved.
  *
  * This code is licensed under GPL3, see the complete license in
- * the LICENSE file in the root directory of this source tree.
+ * the LICENSE file in the root directory of this submodule.
  */
 package com.openosrs.injector.injection;
 
-import com.google.common.collect.ImmutableMap;
 import com.openosrs.injector.InjectUtil;
 import com.openosrs.injector.injectors.Injector;
 import com.openosrs.injector.rsapi.RSApi;
@@ -27,7 +26,7 @@ import net.runelite.asm.signature.Signature;
  */
 public abstract class InjectData
 {
-	public static final String HOOKS = "net/runelite/client/callback/Hooks";
+	public static final String CALLBACKS = "net/runelite/api/hooks/Callbacks";
 
 	@Getter
 	private final ClassGroup vanilla;
@@ -41,10 +40,21 @@ public abstract class InjectData
 	@Getter
 	private final RSApi rsApi;
 
+	public InjectData(ClassGroup vanilla, ClassGroup deobfuscated, ClassGroup mixins, RSApi rsApi)
+	{
+		this.vanilla = vanilla;
+		this.deobfuscated = deobfuscated;
+		this.rsApi = rsApi;
+		this.mixins = mixins;
+
+		initToVanilla();
+	}
+
 	/**
 	 * Deobfuscated ClassFiles -> Vanilla ClassFiles
 	 */
-	private final Map<ClassFile, ClassFile> toVanilla;
+	@Getter
+	private final Map<ClassFile, ClassFile> toVanilla = new HashMap<>();
 
 	/**
 	 * Strings -> Deobfuscated ClassFiles
@@ -52,26 +62,15 @@ public abstract class InjectData
 	 * - Obfuscated name
 	 * - RSApi implementing name
 	 */
-	private final Map<String, ClassFile> toDeob = new HashMap<>();
-
-	public InjectData(ClassGroup vanilla, ClassGroup deobfuscated, ClassGroup mixins, RSApi rsApi)
-	{
-		this.vanilla = vanilla;
-		this.deobfuscated = deobfuscated;
-		this.rsApi = rsApi;
-		this.mixins = mixins;
-		this.toVanilla = initToVanilla();
-	}
+	public final Map<String, ClassFile> toDeob = new HashMap<>();
 
 	public abstract void runChildInjector(Injector injector);
 
-	private Map<ClassFile, ClassFile> initToVanilla()
+	public void initToVanilla()
 	{
-		ImmutableMap.Builder<ClassFile, ClassFile> toVanillaB = ImmutableMap.builder();
-
 		for (final ClassFile deobClass : deobfuscated)
 		{
-			if (deobClass.getName().startsWith("net/runelite/"))
+			if (deobClass.getName().startsWith("net/runelite/") || deobClass.getName().startsWith("netscape"))
 			{
 				continue;
 			}
@@ -81,13 +80,14 @@ public abstract class InjectData
 			{
 				toDeob.put(obName, deobClass);
 
-				// Can't be null
 				final ClassFile obClass = this.vanilla.findClass(obName);
-				toVanillaB.put(deobClass, obClass);
+
+				if (obClass != null)
+				{
+					toVanilla.put(deobClass, obClass);
+				}
 			}
 		}
-
-		return toVanillaB.build();
 	}
 
 	/**
@@ -95,6 +95,7 @@ public abstract class InjectData
 	 */
 	public ClassFile toVanilla(ClassFile deobClass)
 	{
+
 		return toVanilla.get(deobClass);
 	}
 
@@ -148,7 +149,7 @@ public abstract class InjectData
 
 	/**
 	 * Do something with all paired classes.
-	 *
+	 * <p>
 	 * Key = deobfuscated, Value = vanilla
 	 */
 	public void forEachPair(BiConsumer<ClassFile, ClassFile> action)

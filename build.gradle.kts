@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2019, Lucas <https://github.com/Lucwousin>
+ *               2022, Owain van Brakel <https://github.com/Owain94>
  * All rights reserved.
  *
  * This code is licensed under GPL3, see the complete license in
@@ -9,16 +10,14 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     id("java-gradle-plugin")
-    kotlin("jvm") version "1.3.72"
+    kotlin("jvm") version "1.7.0"
     `maven-publish`
-    id("com.github.ben-manes.versions") version "0.28.0"
-    id("se.patrikerdes.use-latest-versions") version "0.2.14"
 }
 
-val oprsver = "3.5.1"
+val oprsver = "4.31.1"
 
 group = "com.openosrs"
-version = "1.1.7"
+version = "2.0.0"
 
 repositories {
     mavenCentral()
@@ -31,19 +30,24 @@ repositories {
 }
 
 dependencies {
-    annotationProcessor("org.projectlombok:lombok:1.18.12")
-    compileOnly("org.projectlombok:lombok:1.18.12")
+    annotationProcessor(group = "org.projectlombok", name = "lombok", version = "1.18.20")
+    compileOnly(group = "org.projectlombok", name = "lombok", version = "1.18.20")
 
-    implementation("org.ow2.asm:asm:8.0.1")
-    implementation("org.ow2.asm:asm-util:8.0.1")
-    implementation("org.jetbrains:annotations:19.0.0")
-    implementation("com.google.guava:guava:29.0-jre")
+    implementation(group = "org.ow2.asm", name = "asm", version = "9.0")
+    implementation(group = "org.ow2.asm", name = "asm-util", version = "9.0")
+    implementation(group = "org.jetbrains", name = "annotations", version = "22.0.0")
+    implementation(group = "com.google.guava", name = "guava", version = "30.1.1-jre") {
+        exclude(group = "com.google.code.findbugs", module = "jsr305")
+        exclude(group = "com.google.errorprone", module = "error_prone_annotations")
+        exclude(group = "com.google.j2objc", module = "j2objc-annotations")
+        exclude(group = "org.codehaus.mojo", module = "animal-sniffer-annotations")
+    }
     implementation("com.openosrs:deobfuscator:${oprsver}") {
         isTransitive = false
     }
 
-    testCompileOnly("com.openosrs:injection-annotations:1.0")
-    testImplementation("junit:junit:4.13")
+    testCompileOnly(group = "com.openosrs", name = "injection-annotations", version = "1.1")
+    testImplementation(group = "junit", name = "junit", version = "4.12")
 }
 
 gradlePlugin {
@@ -55,7 +59,7 @@ gradlePlugin {
     }
 }
 
-configure<JavaPluginConvention> {
+configure<JavaPluginExtension> {
     sourceCompatibility = JavaVersion.VERSION_11
     targetCompatibility = JavaVersion.VERSION_11
 }

@@ -3,7 +3,7 @@
  * All rights reserved.
  *
  * This code is licensed under GPL3, see the complete license in
- * the LICENSE file in the root directory of this source tree.
+ * the LICENSE file in the root directory of this submodule.
  *
  * Copyright (c) 2017, Adam <Adam@sigterm.info>
  * All rights reserved.
@@ -53,7 +53,9 @@ public class InjectSetter
 	public static void inject(ClassFile targetClass, RSApiMethod apiMethod, Field field, Number getter)
 	{
 		if (targetClass.findMethod(apiMethod.getName(), apiMethod.getSignature()) != null)
+		{
 			throw new InjectException("Duplicate setter method " + apiMethod.getMethod().toString());
+		}
 
 		final String name = apiMethod.getName();
 		final Signature sig = apiMethod.getSignature();
@@ -69,7 +71,9 @@ public class InjectSetter
 
 		// load this
 		if (!field.isStatic())
+		{
 			ins.add(new ALoad(instructions, 0));
+		}
 
 		// load argument
 		final Type argumentType = sig.getTypeOfArg(0);
@@ -85,14 +89,28 @@ public class InjectSetter
 		}
 
 		if (getter != null)
+		{
 			InjectUtil.injectObfuscatedSetter(getter, instructions, ins::add);
+		}
 
 		if (field.isStatic())
+		{
 			ins.add(new PutStatic(instructions, field));
+		}
 		else
+		{
 			ins.add(new PutField(instructions, field));
+		}
 
-		ins.add(new VReturn(instructions));
+		if (!apiMethod.getSignature().getReturnValue().equals(Type.VOID))
+		{
+			ins.add(new ALoad(instructions, 0));
+			ins.add(InjectUtil.createReturnForType(instructions, apiMethod.getSignature().getReturnValue()));
+		}
+		else
+		{
+			ins.add(new VReturn(instructions));
+		}
 
 		targetClass.addMethod(method);
 	}

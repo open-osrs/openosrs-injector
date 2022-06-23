@@ -7,8 +7,10 @@
  */
 package com.openosrs.injector;
 
+import com.google.common.hash.Hashing;
 import com.openosrs.injector.injection.InjectData;
 import com.openosrs.injector.injection.InjectTaskHandler;
+import com.openosrs.injector.injectors.CreateAnnotations;
 import com.openosrs.injector.injectors.InjectConstruct;
 import com.openosrs.injector.injectors.Injector;
 import com.openosrs.injector.injectors.InterfaceInjector;
@@ -16,18 +18,27 @@ import com.openosrs.injector.injectors.MixinInjector;
 import com.openosrs.injector.injectors.RSApiInjector;
 import com.openosrs.injector.injectors.raw.AddPlayerToMenu;
 import com.openosrs.injector.injectors.raw.ClearColorBuffer;
-import com.openosrs.injector.injectors.raw.DrawAfterWidgets;
+import com.openosrs.injector.injectors.raw.CopyRuneLiteClasses;
 import com.openosrs.injector.injectors.raw.DrawMenu;
+import com.openosrs.injector.injectors.raw.GameDrawingMode;
+import com.openosrs.injector.injectors.raw.GraphicsObject;
 import com.openosrs.injector.injectors.raw.Occluder;
 import com.openosrs.injector.injectors.raw.RasterizerAlpha;
 import com.openosrs.injector.injectors.raw.RenderDraw;
+import com.openosrs.injector.injectors.raw.RuneLiteIterables;
+import com.openosrs.injector.injectors.raw.RuneliteMenuEntry;
+import com.openosrs.injector.injectors.raw.RuneliteObject;
 import com.openosrs.injector.injectors.raw.ScriptVM;
 import com.openosrs.injector.rsapi.RSApi;
 import com.openosrs.injector.transformers.InjectTransformer;
+import com.openosrs.injector.transformers.Java8Ifier;
 import com.openosrs.injector.transformers.SourceChanger;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import net.runelite.deob.util.JarUtil;
+import static net.runelite.deob.util.JarUtil.load;
 import org.gradle.api.file.FileTree;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
@@ -35,20 +46,35 @@ import org.gradle.api.logging.Logging;
 public class Injection extends InjectData implements InjectTaskHandler
 {
 	private static final Logger log = Logging.getLogger(Injection.class);
+	public static boolean development = true;
 
-	public Injection(File vanilla, File rsclient, File mixins, FileTree rsapi) throws IOException
+	public Injection(File vanilla, File rsclient, File mixins, FileTree rsapi, boolean development)
 	{
 		super(
-			JarUtil.loadJar(vanilla),
-			JarUtil.loadJar(rsclient),
-			JarUtil.loadJar(mixins),
+			load(vanilla),
+			load(rsclient),
+			load(mixins),
 			new RSApi(rsapi)
 		);
+
+		Injection.development = development;
 	}
 
 	public void inject()
 	{
 		log.debug("[DEBUG] Starting injection");
+
+		transform(new Java8Ifier(this));
+
+		inject(new CreateAnnotations(this));
+
+		inject(new GraphicsObject(this));
+
+		inject(new CopyRuneLiteClasses(this));
+
+		inject(new RuneLiteIterables(this));
+
+		inject(new RuneliteObject(this));
 
 		inject(new InterfaceInjector(this));
 
@@ -64,7 +90,7 @@ public class Injection extends InjectData implements InjectTaskHandler
 
 		inject(new RSApiInjector(this));
 
-		inject(new DrawAfterWidgets(this));
+		//inject(new DrawAfterWidgets(this));
 
 		inject(new ScriptVM(this));
 
@@ -77,34 +103,60 @@ public class Injection extends InjectData implements InjectTaskHandler
 
 		inject(new DrawMenu(this));
 
+		inject(new GameDrawingMode(this));
+
 		inject(new AddPlayerToMenu(this));
+
+		inject(new RuneliteMenuEntry(this));
 
 		validate(new InjectorValidator(this));
 
 		transform(new SourceChanger(this));
 	}
 
-	public void save(File outputJar) throws IOException
+	public void save(File outputJar)
 	{
 		log.info("[INFO] Saving jar to {}", outputJar.toString());
 
-		JarUtil.saveJar(this.getVanilla(), outputJar);
+		JarUtil.save(this.getVanilla(), outputJar);
+	}
+
+	public void hash(File output, File vanilla)
+	{
+		log.info("[INFO] Saving hash to {}", output.toString());
+
+		try
+		{
+			String hash = com.google.common.io.Files.asByteSource(vanilla).hash(Hashing.sha256()).toString();
+			log.lifecycle("Writing vanilla hash: {}", hash);
+			Files.write(output.toPath(), hash.getBytes(StandardCharsets.UTF_8));
+		}
+		catch (IOException ex)
+		{
+			log.lifecycle("Failed to write vanilla hash file");
+			throw new RuntimeException(ex);
+		}
 	}
 
 	private void inject(Injector injector)
 	{
 		final String name = injector.getName();
 
-		log.info("[INFO] Starting {}", name);
-
 		injector.start();
 
 		injector.inject();
 
-		log.lifecycle("{} {}", name, injector.getCompletionMsg());
+		String completionMsg = injector.getCompletionMsg();
+
+		if (completionMsg != null)
+		{
+			log.lifecycle("{} {}", name, completionMsg);
+		}
 
 		if (injector instanceof Validator)
+		{
 			validate((Validator) injector);
+		}
 	}
 
 	private void validate(Validator validator)
@@ -120,8 +172,6 @@ public class Injection extends InjectData implements InjectTaskHandler
 	private void transform(InjectTransformer transformer)
 	{
 		final String name = transformer.getName();
-
-		log.info("[INFO] Starting {}", name);
 
 		transformer.transform();
 

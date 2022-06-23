@@ -16,12 +16,15 @@ import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
 @CacheableTask
-abstract class Inject: DefaultTask() {
+abstract class Inject : DefaultTask() {
     @get:Nested
     abstract val extension: InjectExtension
 
     @get:OutputFile
     abstract val output: RegularFileProperty
+
+    @get:OutputFile
+    abstract val hash: RegularFileProperty
 
     @TaskAction
     fun inject() {
@@ -30,10 +33,11 @@ abstract class Inject: DefaultTask() {
         val mixins = extension.mixins.get().asFile
         val rsapi = project.zipTree(extension.rsapi)
 
-        val injector: InjectTaskHandler = Injection(vanilla, rsclient, mixins, rsapi)
+        val injector: InjectTaskHandler = Injection(vanilla, rsclient, mixins, rsapi, if (extension.development.isPresent) extension.development.get() else true)
 
         injector.inject()
 
         injector.save(output.get().asFile)
+        injector.hash(hash.get().asFile, vanilla)
     }
 }

@@ -30,6 +30,10 @@ import com.openosrs.injector.injection.InjectData;
 import com.openosrs.injector.rsapi.RSApi;
 import net.runelite.asm.ClassFile;
 import net.runelite.asm.ClassGroup;
+import net.runelite.asm.Field;
+import net.runelite.asm.Type;
+import static net.runelite.deob.DeobAnnotations.OBFUSCATED_NAME;
+import static net.runelite.deob.DeobAnnotations.OBFUSCATED_SIGNATURE;
 import net.runelite.deob.util.JarUtil;
 import org.junit.Test;
 
@@ -55,6 +59,8 @@ public class DrawAfterWidgetsTest
 		vanilla.addClass(obRasterizer);
 
 		InjectData inject = new TestInjection(vanilla, deob, new ClassGroup(), new RSApi());
+		addPhonyFields(deob, vanilla);
+		inject.initToVanilla();
 		new DrawAfterWidgets(inject).inject();
 	}
 
@@ -78,6 +84,24 @@ public class DrawAfterWidgetsTest
 		vanilla.addClass(obRasterizer);
 
 		InjectData inject = new TestInjection(vanilla, deob, new ClassGroup(), new RSApi());
+		addPhonyFields(deob, vanilla);
+		inject.initToVanilla();
 		new DrawAfterWidgets(inject).inject();
+	}
+
+	private static void addPhonyFields(ClassGroup deob, ClassGroup vanilla)
+	{
+		final ClassFile d = deob.findClass("Client");
+		final ClassFile v = vanilla.findClass("client");
+		final Field clientD = new Field(d, "client", new Type("LClient;"));
+		clientD.findAnnotation(OBFUSCATED_NAME, true).setElement("obclient");
+		clientD.findAnnotation(OBFUSCATED_SIGNATURE, true).setElement("descriptor", "Lclient;");
+		clientD.setStatic();
+		d.addField(clientD);
+		final Field clientV = new Field(v, "obclient", new Type("Lclient;"));
+		clientV.setStatic();
+		v.addField(clientV);
+		final Field callbacks = new Field(v, "callbacks", new Type("LCallbacks;"));
+		v.addField(callbacks);
 	}
 }

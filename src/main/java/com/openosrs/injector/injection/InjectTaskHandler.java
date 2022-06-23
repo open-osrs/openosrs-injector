@@ -8,7 +8,6 @@
 package com.openosrs.injector.injection;
 
 import java.io.File;
-import java.io.IOException;
 
 /**
  * Interface containing all the methods gradle needs to know about
@@ -23,5 +22,10 @@ public interface InjectTaskHandler
 	/**
 	 * Call this to save the injected jar to outputJar
 	 */
-	void save(File outputJar) throws IOException;
+	void save(File outputJar);
+
+	/**
+	 * Call this to save the vanilla hash
+	 */
+	void hash(File outputFile, File vanilla);
 }

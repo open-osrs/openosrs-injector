@@ -3,7 +3,7 @@
  * All rights reserved.
  *
  * This code is licensed under GPL3, see the complete license in
- * the LICENSE file in the root directory of this source tree.
+ * the LICENSE file in the root directory of this submodule.
  *
  * Copyright (c) 2016-2017, Adam <Adam@sigterm.info>
  * All rights reserved.
@@ -33,6 +33,7 @@ package com.openosrs.injector.injectors;
 import com.openosrs.injector.InjectException;
 import com.openosrs.injector.InjectUtil;
 import com.openosrs.injector.injection.InjectData;
+import static com.openosrs.injector.rsapi.RSApi.CONSTRUCT;
 import com.openosrs.injector.rsapi.RSApiMethod;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -50,7 +51,6 @@ import net.runelite.asm.attributes.code.instructions.Return;
 import net.runelite.asm.pool.Class;
 import net.runelite.asm.pool.Method;
 import net.runelite.asm.signature.Signature;
-import static com.openosrs.injector.rsapi.RSApi.CONSTRUCT;
 import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
 
 public class InjectConstruct extends AbstractInjector
@@ -69,7 +69,9 @@ public class InjectConstruct extends AbstractInjector
 		{
 			Annotation construct = apiMethod.findAnnotation(CONSTRUCT);
 			if (construct == null)
+			{
 				continue;
+			}
 
 			final Method method = apiMethod.getMethod();
 			final Class clazz = method.getClazz();
@@ -103,7 +105,9 @@ public class InjectConstruct extends AbstractInjector
 
 		final net.runelite.asm.Method constructor = classToConstruct.findMethod("<init>", constr);
 		if (constructor == null)
+		{
 			throw new InjectException("Unable to find constructor for " + classToConstruct.getName() + ".<init>" + constr);
+		}
 
 
 		net.runelite.asm.Method setterMethod = new net.runelite.asm.Method(targetClass, apiMethod.getName(), apiMethod.getType());

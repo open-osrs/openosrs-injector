@@ -3,15 +3,13 @@
  * All rights reserved.
  *
  * This code is licensed under GPL3, see the complete license in
- * the LICENSE file in the root directory of this source tree.
+ * the LICENSE file in the root directory of this submodule.
  */
 package com.openosrs.injector.rsapi;
 
 import java.util.HashMap;
 import java.util.Map;
-import lombok.Data;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import net.runelite.asm.Annotation;
 import net.runelite.asm.Named;

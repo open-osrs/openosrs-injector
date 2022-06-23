@@ -3,16 +3,16 @@
  * All rights reserved.
  *
  * This code is licensed under GPL3, see the complete license in
- * the LICENSE file in the root directory of this source tree.
+ * the LICENSE file in the root directory of this submodule.
  */
 package com.openosrs.injector.injectors;
 
 import com.openosrs.injector.injection.InjectData;
+import static com.openosrs.injector.rsapi.RSApi.API_BASE;
 import net.runelite.asm.ClassFile;
 import net.runelite.asm.Interfaces;
 import net.runelite.asm.pool.Class;
 import net.runelite.deob.DeobAnnotations;
-import static com.openosrs.injector.rsapi.RSApi.API_BASE;
 
 public class InterfaceInjector extends AbstractInjector
 {
@@ -36,12 +36,14 @@ public class InterfaceInjector extends AbstractInjector
 		final String impls = DeobAnnotations.getImplements(deobCf);
 
 		if (impls == null)
+		{
 			return;
+		}
 
 		final String fullName = API_BASE + impls;
 		if (!inject.getRsApi().hasClass(fullName))
 		{
-			log.debug("[DEBUG] Class {} implements nonexistent interface {}, skipping interface injection",
+			log.error("[DEBUG] Class {} implements nonexistent interface {}, skipping interface injection",
 				deobCf.getName(),
 				fullName
 			);

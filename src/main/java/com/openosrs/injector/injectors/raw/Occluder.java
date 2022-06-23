@@ -3,7 +3,7 @@
  * All rights reserved.
  *
  * This code is licensed under GPL3, see the complete license in
- * the LICENSE file in the root directory of this source tree.
+ * the LICENSE file in the root directory of this submodule.
  */
 package com.openosrs.injector.injectors.raw;
 
@@ -49,12 +49,16 @@ public class Occluder extends AbstractInjector
 			Instruction i = it.next();
 
 			if (!(i instanceof BiPush))
+			{
 				continue;
+			}
 
 			boolean shouldChange = (byte) ((BiPush) i).getConstant() == OLDVALUE;
 
 			if (!shouldChange)
+			{
 				continue;
+			}
 
 			replaced++;
 
@@ -64,6 +68,8 @@ public class Occluder extends AbstractInjector
 		}
 
 		if (replaced != 10)
+		{
 			throw new InjectException("Only found " + replaced + " 25's to replace in occlude instead of expected 10");
+		}
 	}
 }

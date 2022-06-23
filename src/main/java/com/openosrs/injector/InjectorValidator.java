@@ -3,12 +3,13 @@
  * All rights reserved.
  *
  * This code is licensed under GPL3, see the complete license in
- * the LICENSE file in the root directory of this source tree.
+ * the LICENSE file in the root directory of this submodule.
  */
 package com.openosrs.injector;
 
 import com.openosrs.injector.injection.InjectData;
 import com.openosrs.injector.rsapi.RSApi;
+import static com.openosrs.injector.rsapi.RSApi.API_BASE;
 import com.openosrs.injector.rsapi.RSApiClass;
 import com.openosrs.injector.rsapi.RSApiMethod;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +17,6 @@ import net.runelite.asm.ClassFile;
 import net.runelite.asm.pool.Class;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
-import static com.openosrs.injector.rsapi.RSApi.API_BASE;
 
 @RequiredArgsConstructor
 public class InjectorValidator implements Validator
@@ -35,7 +35,9 @@ public class InjectorValidator implements Validator
 			for (Class intf : cf.getInterfaces())
 			{
 				if (!intf.getName().startsWith(API_BASE))
+				{
 					continue;
+				}
 
 				RSApiClass apiC = rsApi.findClass(intf.getName());
 				if (apiC == null)
@@ -61,11 +63,13 @@ public class InjectorValidator implements Validator
 		for (RSApiMethod apiMethod : apiClass)
 		{
 			if (apiMethod.isSynthetic() || apiMethod.isDefault())
+			{
 				continue;
+			}
 
 			if (clazz.findMethodDeep(apiMethod.getName(), apiMethod.getSignature()) == null)
 			{
-				log.warn("[WARN] Class {} implements interface {} but doesn't implement {}",
+				log.error("[WARN] Class {} implements interface {} but doesn't implement {}",
 					clazz.getPoolClass(), apiClass.getClazz(), apiMethod.getMethod());
 				++missing;
 			}

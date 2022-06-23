@@ -28,61 +28,54 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.openosrs.injector.injectors.rsapi;
+package com.openosrs.injector.injectors;
 
-import com.openosrs.injector.InjectException;
-import com.openosrs.injector.InjectUtil;
-import com.openosrs.injector.rsapi.RSApiMethod;
-import java.util.List;
+import com.openosrs.injector.injection.InjectData;
 import net.runelite.asm.ClassFile;
 import net.runelite.asm.Field;
 import net.runelite.asm.Method;
-import net.runelite.asm.attributes.Code;
-import net.runelite.asm.attributes.code.Instruction;
-import net.runelite.asm.attributes.code.Instructions;
-import net.runelite.asm.attributes.code.instructions.ALoad;
-import net.runelite.asm.attributes.code.instructions.GetField;
-import net.runelite.asm.attributes.code.instructions.GetStatic;
-import net.runelite.asm.signature.Signature;
+import net.runelite.deob.DeobAnnotations;
 
-public class InjectGetter
+/*
+ * This handles creating "virtual" annotations to clean up rs-client in the main project
+ */
+public class CreateAnnotations extends AbstractInjector
 {
-	public static void inject(ClassFile targetClass, RSApiMethod apiMethod, Field field, Number getter)
+
+	public CreateAnnotations(InjectData inject)
 	{
-		if (targetClass.findMethod(apiMethod.getName(), apiMethod.getSignature()) != null)
+		super(inject);
+	}
+
+	public void inject()
+	{
+		for (final ClassFile deobClass : inject.getDeobfuscated())
 		{
-			throw new InjectException("Duplicate getter method " + apiMethod.getMethod().toString());
+			injectFields(deobClass);
+			injectMethods(deobClass);
+
+			if (deobClass.getName().startsWith("class"))
+			{
+				continue;
+			}
+
+			deobClass.addAnnotation(DeobAnnotations.IMPLEMENTS, deobClass.getName());
 		}
+	}
 
-		final String name = apiMethod.getName();
-		final Signature sig = apiMethod.getSignature();
-
-		final Method method = new Method(targetClass, name, sig);
-		method.setPublic();
-
-		final Code code = new Code(method);
-		method.setCode(code);
-
-		final Instructions instructions = code.getInstructions();
-		final List<Instruction> ins = instructions.getInstructions();
-
-		if (field.isStatic())
+	private void injectFields(ClassFile deobClass)
+	{
+		for (Field deobField : deobClass.getFields())
 		{
-			ins.add(new GetStatic(instructions, field.getPoolField()));
+			deobField.addAnnotation(DeobAnnotations.EXPORT, deobField.getName());
 		}
-		else
+	}
+
+	private void injectMethods(ClassFile deobClass)
+	{
+		for (Method deobMethod : deobClass.getMethods())
 		{
-			ins.add(new ALoad(instructions, 0));
-			ins.add(new GetField(instructions, field.getPoolField()));
+			deobMethod.addAnnotation(DeobAnnotations.EXPORT, deobMethod.getName());
 		}
-
-		if (getter != null)
-		{
-			InjectUtil.injectObfuscatedGetter(getter, instructions, ins::add);
-		}
-
-		ins.add(InjectUtil.createReturnForType(instructions, field.getType()));
-
-		targetClass.addMethod(method);
 	}
 }

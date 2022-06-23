@@ -3,10 +3,12 @@
  * All rights reserved.
  *
  * This code is licensed under GPL3, see the complete license in
- * the LICENSE file in the root directory of this source tree.
+ * the LICENSE file in the root directory of this submodule.
  */
 package com.openosrs.injector.rsapi;
 
+import static com.openosrs.injector.rsapi.RSApi.CONSTRUCT;
+import static com.openosrs.injector.rsapi.RSApi.IMPORT;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -22,8 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
-import static com.openosrs.injector.rsapi.RSApi.CONSTRUCT;
-import static com.openosrs.injector.rsapi.RSApi.IMPORT;
 
 @Getter
 @Setter
@@ -46,7 +46,9 @@ public class RSApiClass extends ClassVisitor implements Iterable<RSApiMethod>
 		for (RSApiMethod method : this)
 		{
 			if (method.isSynthetic())
+			{
 				continue;
+			}
 
 			if (method.findAnnotation(CONSTRUCT) != null)
 			{
@@ -56,10 +58,12 @@ public class RSApiClass extends ClassVisitor implements Iterable<RSApiMethod>
 
 			final Annotation imported = method.findAnnotation(IMPORT);
 			if (imported != null)
+			{
 				imports.computeIfAbsent(
 					imported.getValueString(),
 					(str) -> new ArrayList<>()
 				).add(method);
+			}
 		}
 	}
 
@@ -79,7 +83,9 @@ public class RSApiClass extends ClassVisitor implements Iterable<RSApiMethod>
 	{
 		List<RSApiMethod> imported = imports.get(str);
 		if (imported == null)
+		{
 			return;
+		}
 
 		to.addAll(imported);
 	}
@@ -95,7 +101,9 @@ public class RSApiClass extends ClassVisitor implements Iterable<RSApiMethod>
 		clazz = new Class(name);
 
 		for (String s : interfaces)
+		{
 			this.interfaces.add(new Class(s));
+		}
 	}
 
 	public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions)

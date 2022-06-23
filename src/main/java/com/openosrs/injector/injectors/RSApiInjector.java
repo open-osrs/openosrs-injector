@@ -3,7 +3,7 @@
  * All rights reserved.
  *
  * This code is licensed under GPL3, see the complete license in
- * the LICENSE file in the root directory of this source tree.
+ * the LICENSE file in the root directory of this submodule.
  *
  * Copyright (c) 2016-2017, Adam <Adam@sigterm.info>
  * All rights reserved.
@@ -36,6 +36,7 @@ import com.openosrs.injector.injection.InjectData;
 import com.openosrs.injector.injectors.rsapi.InjectGetter;
 import com.openosrs.injector.injectors.rsapi.InjectInvoke;
 import com.openosrs.injector.injectors.rsapi.InjectSetter;
+import static com.openosrs.injector.rsapi.RSApi.API_BASE;
 import com.openosrs.injector.rsapi.RSApiClass;
 import com.openosrs.injector.rsapi.RSApiMethod;
 import java.util.ArrayList;
@@ -50,7 +51,6 @@ import net.runelite.asm.Type;
 import net.runelite.asm.attributes.Annotated;
 import net.runelite.asm.signature.Signature;
 import net.runelite.deob.DeobAnnotations;
-import static com.openosrs.injector.rsapi.RSApi.API_BASE;
 
 public class RSApiInjector extends AbstractInjector
 {
@@ -84,7 +84,9 @@ public class RSApiInjector extends AbstractInjector
 			final List<RSApiMethod> matching = findImportsFor(deobField, deobField.isStatic(), implementingClass);
 
 			if (matching == null)
+			{
 				continue;
+			}
 
 			final Type deobType = deobField.getType();
 
@@ -116,9 +118,9 @@ public class RSApiInjector extends AbstractInjector
 
 				final Signature sig = apiMethod.getSignature();
 
-				if (sig.isVoid())
+				if (sig.size() == 1)
 				{
-					if (sig.size() == 1)
+					if (sig.isVoid() || sig.getReturnValue().equals(Type.fromAsmString(apiMethod.getClazz().getName())))
 					{
 						Type type = InjectUtil.apiToDeob(inject, sig.getTypeOfArg(0));
 						if (deobType.equals(type))
@@ -129,7 +131,7 @@ public class RSApiInjector extends AbstractInjector
 				}
 				else if (sig.size() == 0)
 				{
-					Type type = InjectUtil.apiToDeob(inject, sig.getReturnValue());
+					Type type = InjectUtil.apiToDeob(inject, sig.getReturnValue(), deobType);
 					if (deobType.equals(type))
 					{
 						continue;
@@ -153,7 +155,9 @@ public class RSApiInjector extends AbstractInjector
 			final Number getter = DeobAnnotations.getObfuscatedGetter(deobField);
 
 			if (deobField.isStatic() != vanillaField.isStatic()) // Can this even happen
+			{
 				throw new InjectException("Something went horribly wrong, and this should honestly never happen, but you never know. Btw it's the static-ness");
+			}
 
 			inject(matching, deobField, vanillaField, getter);
 		}
@@ -166,7 +170,9 @@ public class RSApiInjector extends AbstractInjector
 			final List<RSApiMethod> matching = findImportsFor(deobMethod, deobMethod.isStatic(), implementingClass);
 
 			if (matching == null)
+			{
 				continue;
+			}
 
 			final Signature deobSig = deobMethod.getDescriptor();
 
@@ -211,7 +217,9 @@ public class RSApiInjector extends AbstractInjector
 				apiMethod.setInjected(true);
 			}
 			else if (matching.size() != 0)
+			{
 				throw new InjectException("Multiple api imports matching method " + deobMethod.getPoolMethod());
+			}
 		}
 	}
 
@@ -224,8 +232,10 @@ public class RSApiInjector extends AbstractInjector
 
 			matched.removeIf(RSApiMethod::isInjected);
 
-			if (matched.size() > 2)
+			/*if (matched.size() > 2)
+			{
 				throw new InjectException("More than 2 imported api methods for field " + deobField.getPoolField());
+			}*/
 
 			final Field vanillaField = inject.toVanilla(deobField);
 			final Number getter = DeobAnnotations.getObfuscatedGetter(deobField);
@@ -238,7 +248,9 @@ public class RSApiInjector extends AbstractInjector
 	{
 		final String exportedName = InjectUtil.getExportedName(object);
 		if (exportedName == null)
+		{
 			return null;
+		}
 
 		final List<RSApiMethod> matching = new ArrayList<>();
 
@@ -264,7 +276,7 @@ public class RSApiInjector extends AbstractInjector
 			final ClassFile targetClass = InjectUtil.vanillaFromApiMethod(inject, apiMethod);
 			apiMethod.setInjected(true);
 
-			if (apiMethod.getSignature().isVoid())
+			if (apiMethod.getSignature().getArguments().size() == 1)
 			{
 				++set;
 				log.debug("[DEBUG] Injecting setter {} for {} into {}", apiMethod.getMethod(), field.getPoolField(), targetClass.getPoolClass());

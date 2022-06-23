@@ -3,7 +3,7 @@
  * All rights reserved.
  *
  * This code is licensed under GPL3, see the complete license in
- * the LICENSE file in the root directory of this source tree.
+ * the LICENSE file in the root directory of this submodule.
  */
 package com.openosrs.injector.injectors.raw;
 
@@ -24,19 +24,10 @@ import net.runelite.asm.attributes.code.instructions.InvokeStatic;
 import net.runelite.asm.execution.Execution;
 import net.runelite.asm.execution.InstructionContext;
 import net.runelite.asm.execution.MethodContext;
-import net.runelite.asm.pool.Class;
 import net.runelite.asm.pool.Field;
-import net.runelite.asm.signature.Signature;
-import static com.openosrs.injector.injection.InjectData.HOOKS;
 
 public class DrawMenu extends AbstractInjector
 {
-	private static final net.runelite.asm.pool.Method DRAWMENU = new net.runelite.asm.pool.Method(
-		new Class(HOOKS),
-		"drawMenu",
-		new Signature("()Z")
-	);
-
 	public DrawMenu(InjectData inject)
 	{
 		super(inject);
@@ -66,6 +57,7 @@ public class DrawMenu extends AbstractInjector
 		 * --------
 		 */
 
+		final net.runelite.asm.pool.Method drawMenu = inject.getVanilla().findClass("client").findMethod("drawMenu").getPoolMethod();
 		final Method drawLoggedIn = InjectUtil.findMethod(inject, "drawLoggedIn", "Client", null, true, false);
 		final Field gameDrawMode = InjectUtil.findField(inject, "gameDrawingMode", "Client").getPoolField();
 		final Field isMenuOpen = InjectUtil.findField(inject, "isMenuOpen", "Client").getPoolField();
@@ -87,7 +79,9 @@ public class DrawMenu extends AbstractInjector
 		{
 			Instruction instruction = ic.getInstruction();
 			if (!(instruction instanceof GetStatic))
+			{
 				continue;
+			}
 
 			if (((GetStatic) instruction).getField().equals(isMenuOpen))
 			{
@@ -100,30 +94,40 @@ public class DrawMenu extends AbstractInjector
 				// If the popper is a IfNe the label it's pointing to is the drawMenu one and topLeft is directly after it
 				// else it's the other way around, obviously
 				if (isMenuOpenPopI instanceof IfNe)
+				{
 					injectInvokeAfter = ((IfNe) isMenuOpenPopI).getTo();
+				}
 				else
+				{
 					injectInvokeAfter = isMenuOpenPopI;
+				}
 			}
 			else if (((GetStatic) instruction).getField().equals(gameDrawMode))
 			{
 				List<Instruction> instrL = instruction.getInstructions().getInstructions();
 				for (int i = instrL.indexOf(instruction); !(instruction instanceof Label); i--)
+				{
 					instruction = instrL.get(i);
+				}
 
 				labelToJumpTo = (Label) instruction;
 			}
 
 			if (injectInvokeAfter != null && labelToJumpTo != null)
+			{
 				break;
+			}
 		}
 
 		if (injectInvokeAfter == null || labelToJumpTo == null)
+		{
 			throw new InjectException("Couldn't find the right location for DrawMenu to inject");
+		}
 
 		final Instructions instrs = mc.getMethod().getCode().getInstructions();
 		int idx = instrs.getInstructions().indexOf(injectInvokeAfter);
 
-		instrs.addInstruction(++idx, new InvokeStatic(instrs, DRAWMENU));
+		instrs.addInstruction(++idx, new InvokeStatic(instrs, drawMenu));
 		instrs.addInstruction(++idx, new IfNe(instrs, labelToJumpTo));
 
 		log.info("[INFO] DrawMenu injected a method call at index {} in method {}. With a comparison jumping to {}", idx, drawLoggedIn, labelToJumpTo);

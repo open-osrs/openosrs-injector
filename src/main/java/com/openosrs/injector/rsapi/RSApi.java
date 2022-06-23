@@ -3,7 +3,7 @@
  * All rights reserved.
  *
  * This code is licensed under GPL3, see the complete license in
- * the LICENSE file in the root directory of this source tree.
+ * the LICENSE file in the root directory of this submodule.
  */
 package com.openosrs.injector.rsapi;
 
@@ -15,8 +15,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import net.runelite.asm.Type;
@@ -45,7 +47,9 @@ public class RSApi implements Iterable<RSApiClass>
 		for (File file : classes)
 		{
 			if (!file.getName().startsWith("RS"))
+			{
 				continue;
+			}
 
 			try (InputStream is = new FileInputStream(file))
 			{
@@ -72,7 +76,9 @@ public class RSApi implements Iterable<RSApiClass>
 		final ImmutableMap.Builder<String, RSApiClass> builder = ImmutableMap.builder();
 
 		for (RSApiClass clazz : this)
+		{
 			builder.put(clazz.getName(), clazz);
+		}
 
 		this.map = builder.build();
 
@@ -108,17 +114,19 @@ public class RSApi implements Iterable<RSApiClass>
 		return findClass(name) != null;
 	}
 
-	public RSApiClass withInterface(Class interf)
+	public Set<RSApiClass> withInterface(Class interf)
 	{
-		RSApiClass clazz = findClass(interf.getName());
-		if (clazz != null)
-			return clazz;
+		Set<RSApiClass> classes = new HashSet<>();
 
 		for (RSApiClass apiC : this)
+		{
 			if (apiC.getInterfaces().contains(interf))
-				return apiC;
+			{
+				classes.add(apiC);
+			}
+		}
 
-		return null;
+		return classes;
 	}
 
 	@NotNull

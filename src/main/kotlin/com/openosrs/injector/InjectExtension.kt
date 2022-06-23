@@ -8,17 +8,23 @@
 package com.openosrs.injector
 
 import org.gradle.api.file.RegularFileProperty
-import org.gradle.api.tasks.InputFile
-import org.gradle.api.tasks.PathSensitive
-import org.gradle.api.tasks.PathSensitivity
+import org.gradle.api.provider.Property
+import org.gradle.api.tasks.*
 
 interface InjectExtension {
+    @get:Input
+    @get:Optional
+    val development: Property<Boolean>
+
     @get:[InputFile PathSensitive(PathSensitivity.NONE)]
     val vanilla: RegularFileProperty
+
     @get:[InputFile PathSensitive(PathSensitivity.NONE)]
     val rsclient: RegularFileProperty
+
     @get:[InputFile PathSensitive(PathSensitivity.NONE)]
     val mixins: RegularFileProperty
+
     @get:[InputFile PathSensitive(PathSensitivity.NONE)]
     val rsapi: RegularFileProperty
 }
