@@ -16,6 +16,10 @@ interface InjectExtension {
     @get:Optional
     val development: Property<Boolean>
 
+    @get:Input
+    @get:Optional
+    val skip: Property<String>
+
     @get:[InputFile PathSensitive(PathSensitivity.NONE)]
     val vanilla: RegularFileProperty
 

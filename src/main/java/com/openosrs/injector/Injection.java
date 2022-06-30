@@ -47,8 +47,9 @@ public class Injection extends InjectData implements InjectTaskHandler
 {
 	private static final Logger log = Logging.getLogger(Injection.class);
 	public static boolean development = true;
+	public static String skips = "";
 
-	public Injection(File vanilla, File rsclient, File mixins, FileTree rsapi, boolean development)
+	public Injection(File vanilla, File rsclient, File mixins, FileTree rsapi, boolean development, String skip)
 	{
 		super(
 			load(vanilla),
@@ -58,6 +59,7 @@ public class Injection extends InjectData implements InjectTaskHandler
 		);
 
 		Injection.development = development;
+		Injection.skips = skip;
 	}
 
 	public void inject()
@@ -142,15 +144,18 @@ public class Injection extends InjectData implements InjectTaskHandler
 	{
 		final String name = injector.getName();
 
-		injector.start();
-
-		injector.inject();
-
-		String completionMsg = injector.getCompletionMsg();
-
-		if (completionMsg != null)
+		if (injector.shouldRun())
 		{
-			log.lifecycle("{} {}", name, completionMsg);
+			injector.start();
+
+			injector.inject();
+
+			String completionMsg = injector.getCompletionMsg();
+
+			if (completionMsg != null)
+			{
+				log.lifecycle("{} {}", name, completionMsg);
+			}
 		}
 
 		if (injector instanceof Validator)

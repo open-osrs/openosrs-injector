@@ -8,6 +8,7 @@
 package com.openosrs.injector.injectors;
 
 import com.google.common.base.Stopwatch;
+import com.openosrs.injector.Injection;
 import com.openosrs.injector.injection.InjectData;
 import lombok.RequiredArgsConstructor;
 import org.gradle.api.logging.Logger;
@@ -28,5 +29,10 @@ public abstract class AbstractInjector implements Injector
 	public String getCompletionMsg()
 	{
 		return "finished in " + stopwatch.toString();
+	}
+
+	public boolean shouldRun()
+	{
+		return !Injection.skips.contains(this.getName());
 	}
 }

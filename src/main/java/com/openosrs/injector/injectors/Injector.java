@@ -33,4 +33,9 @@ public interface Injector extends Named
 	 * Gets a message logged at quiet level when the injector ends
 	 */
 	String getCompletionMsg();
+
+	/**
+	 * Checks if this injector is in the skip list
+	 */
+	boolean shouldRun();
 }

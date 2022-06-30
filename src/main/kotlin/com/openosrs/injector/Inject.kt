@@ -33,7 +33,14 @@ abstract class Inject : DefaultTask() {
         val mixins = extension.mixins.get().asFile
         val rsapi = project.zipTree(extension.rsapi)
 
-        val injector: InjectTaskHandler = Injection(vanilla, rsclient, mixins, rsapi, if (extension.development.isPresent) extension.development.get() else true)
+        val injector: InjectTaskHandler = Injection(
+                vanilla,
+                rsclient,
+                mixins,
+                rsapi,
+                if (extension.development.isPresent) extension.development.get() else true,
+                if (extension.skip.isPresent) extension.skip.get() else ""
+        )
 
         injector.inject()
 
